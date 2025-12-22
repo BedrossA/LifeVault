@@ -1,0 +1,69 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+*.egg-info/
+.pytest_cache/
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+.pnpm-debug.log*
+dist/
+build/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Logs
+logs/
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Data files
+data/face_data/
+data/uploads/
+*.jpg
+*.jpeg
+*.png
+!public/*.png
+
+# Keys and secrets
+*.pem
+*.key
+*.keystore
+secrets/
+
+# Flutter/Dart
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+build/
+*.iml
+
+# Mobile
+android/app/google-services.json
+android/key.properties
+ios/Runner/GoogleService-Info.plist
+*.jks
