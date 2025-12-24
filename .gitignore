@@ -4,17 +4,17 @@ __pycache__/
 *$py.class
 *.so
 .Python
-venv/
+venv*/
 env/
 ENV/
 *.egg-info/
 .pytest_cache/
+.coverage
+htmlcov/
 
 # Node
 node_modules/
 npm-debug.log*
-yarn-debug.log*
-.pnpm-debug.log*
 dist/
 build/
 
@@ -37,6 +37,8 @@ logs/
 Thumbs.db
 .vscode/
 .idea/
+*.swp
+*.swo
 
 # Data files
 data/face_data/
@@ -45,6 +47,7 @@ data/uploads/
 *.jpeg
 *.png
 !public/*.png
+!docs/**/*.png
 
 # Keys and secrets
 *.pem
@@ -52,18 +55,11 @@ data/uploads/
 *.keystore
 secrets/
 
-# Flutter/Dart
-.dart_tool/
-.flutter-plugins
-.flutter-plugins-dependencies
-.packages
-.pub-cache/
-.pub/
-build/
-*.iml
+# Test files
+test.db
+test_*.db
 
-# Mobile
-android/app/google-services.json
-android/key.properties
-ios/Runner/GoogleService-Info.plist
-*.jks
+# IDEs
+.vscode/
+.idea/
+*.sublime-*
