@@ -1,24 +1,53 @@
+"""Logging configuration for the application"""
 import logging
-import os
+import logging.handlers
+import sys
+from pathlib import Path
 from app.core.config import settings
 
 def setup_logging():
-    """Setup application logging"""
+    """Configure application logging"""
     
-    # Create logs directory if it doesn't exist
-    log_dir = os.path.dirname(settings.LOG_FILE)
-    if log_dir and not os.path.exists(log_dir):
-        os.makedirs(log_dir)
+    # Create logger
+    logger = logging.getLogger()
+    logger.setLevel(getattr(logging, settings.LOG_LEVEL))
     
-    # Configure logging
-    logging.basicConfig(
-        level=getattr(logging, settings.LOG_LEVEL),
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-        handlers=[
-            logging.FileHandler(settings.LOG_FILE),
-            logging.StreamHandler()
-        ]
+    # Create formatters
+    detailed_formatter = logging.Formatter(
+        '%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        datefmt='%Y-%m-%d %H:%M:%S'
     )
     
-    logger = logging.getLogger(__name__)
+    simple_formatter = logging.Formatter(
+        '%(levelname)s - %(message)s'
+    )
+    
+    # Console handler (stdout)
+    console_handler = logging.StreamHandler(sys.stdout)
+    console_handler.setLevel(logging.INFO)
+    console_handler.setFormatter(simple_formatter)
+    
+    # File handler with rotation
+    log_file = Path(settings.LOG_FILE)
+    log_file.parent.mkdir(parents=True, exist_ok=True)
+    
+    file_handler = logging.handlers.RotatingFileHandler(
+        settings.LOG_FILE,
+        maxBytes=settings.LOG_MAX_BYTES,
+        backupCount=settings.LOG_BACKUP_COUNT
+    )
+    file_handler.setLevel(logging.DEBUG)
+    file_handler.setFormatter(detailed_formatter)
+    
+    # Add handlers
+    logger.addHandler(console_handler)
+    logger.addHandler(file_handler)
+    
+    # Log startup
     logger.info(f"Logging initialized - Level: {settings.LOG_LEVEL}")
+    logger.info(f"Log file: {settings.LOG_FILE}")
+    
+    return logger
+
+# Initialize logging on module import
+logger = setup_logging()
