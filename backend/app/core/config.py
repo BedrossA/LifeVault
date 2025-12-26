@@ -72,6 +72,19 @@ class Settings(BaseSettings):
         case_sensitive=False,
         extra="ignore"  # This allows extra fields from .env
     )
+    # Face Recognition Advanced Settings
+    FACE_MIN_QUALITY_THRESHOLD: float = 0.5  # Minimum quality to accept enrollment
+    FACE_ADAPTIVE_THRESHOLD_ENABLED: bool = True  # Enable per-user thresholds
+    FACE_HIGH_QUALITY_THRESHOLD: float = 0.5  # Threshold for high-quality encodings
+    FACE_LOW_QUALITY_THRESHOLD: float = 0.7  # Threshold for low-quality encodings
+    
+    # Multi-face detection
+    FACE_MAX_FACES_IN_FRAME: int = 10  # Maximum faces to detect in one image
+    FACE_ENABLE_MULTI_DETECTION: bool = True  # Allow multiple face detection
+    
+    # WebSocket settings
+    WS_HEARTBEAT_INTERVAL: int = 30  # seconds
+    WS_MAX_FRAME_SIZE: int = 1024 * 1024  # 1MB
     
     @property
     def allowed_extensions_list(self) -> List[str]:
