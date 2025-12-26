@@ -1,5 +1,5 @@
 """Application configuration using Pydantic settings"""
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing import List
 from pathlib import Path
 
@@ -66,9 +66,12 @@ class Settings(BaseSettings):
     LOG_MAX_BYTES: int = 10485760
     LOG_BACKUP_COUNT: int = 5
     
-    class Config:
-        env_file = ".env"
-        case_sensitive = True
+    # Pydantic v2 configuration
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        case_sensitive=False,
+        extra="ignore"  # This allows extra fields from .env
+    )
     
     @property
     def allowed_extensions_list(self) -> List[str]:

@@ -1,4 +1,3 @@
-#!/bin/bash
 # Development server run script
 
 cd "$(dirname "$0")/.."

@@ -9,8 +9,12 @@ def setup_logging():
     """Configure application logging"""
     
     # Create logger
-    logger = logging.getLogger()
+    logger = logging.getLogger("lifevault")
     logger.setLevel(getattr(logging, settings.LOG_LEVEL))
+    
+    # Prevent duplicate handlers
+    if logger.handlers:
+        return logger
     
     # Create formatters
     detailed_formatter = logging.Formatter(
@@ -49,5 +53,5 @@ def setup_logging():
     
     return logger
 
-# Initialize logging on module import
+# Initialize logging and export logger
 logger = setup_logging()

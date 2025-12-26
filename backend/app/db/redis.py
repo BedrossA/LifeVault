@@ -33,7 +33,8 @@ async def connect_redis():
 async def close_redis():
     """Close Redis connection"""
     if redis_db.client:
-        await redis_db.client.close()
+        if hasattr(redis_db.client, 'aclose'):
+            await redis_db.client.aclose()
         logger.info("Redis connection closed")
 
 async def get_redis():
