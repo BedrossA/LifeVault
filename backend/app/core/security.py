@@ -36,8 +36,15 @@ def create_refresh_token(data: Dict[str, Any]) -> str:
     return jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
 
 def decode_token(token: str) -> Optional[Dict[str, Any]]:
-    """Decode and verify JWT token"""
     try:
-        return jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
-    except JWTError:
+        # Adding leeway handles the tiny microsecond differences
+        return jwt.decode(
+            token, 
+            settings.SECRET_KEY, 
+            algorithms=[settings.ALGORITHM],
+            options={"leeway": 60} 
+        )
+    except Exception as e:
+        # This will print to your RPi console so you can see the EXACT error
+        print(f"JWT Decode Error: {str(e)}")
         return None

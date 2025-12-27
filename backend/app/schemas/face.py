@@ -1,5 +1,5 @@
 """Enhanced face recognition schemas"""
-from pydantic import BaseModel, Field
+from pydantic import BaseModel,ConfigDict, Field
 from typing import Optional, List, Dict
 from datetime import datetime
 
@@ -48,6 +48,8 @@ class FaceRecognitionResponse(BaseModel):
 
 class FaceListResponse(BaseModel):
     """User's enrolled faces"""
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     label: str
     confidence_score: float
@@ -59,9 +61,6 @@ class FaceListResponse(BaseModel):
     is_active: bool
     created_at: datetime
     last_recognized: Optional[datetime] = None
-    
-    class Config:
-        from_attributes = True
 
 class FaceDeleteResponse(BaseModel):
     """Response after deleting a face"""
