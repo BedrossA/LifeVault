@@ -2,6 +2,7 @@
 import face_recognition
 import numpy as np
 from typing import Optional, List, Tuple
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, UploadFile
 from PIL import Image
@@ -37,13 +38,14 @@ class FaceRecognitionService:
             raise HTTPException(status_code=400, detail="Invalid image file")
     
     @staticmethod
-    def detect_faces(image: np.ndarray, method: str = "hog") -> List[Tuple]:
+    def detect_faces(image: np.ndarray, method: str = "hog", max_faces: Optional[int] = None) -> List[Tuple]:
         """
-        Detect faces in image
+        Detect faces in image with optional limit
         
         Args:
             image: Image as numpy array
             method: Detection method ('hog' or 'cnn')
+            max_faces: Maximum number of faces to detect
         
         Returns:
             List of face locations (top, right, bottom, left)
@@ -51,8 +53,18 @@ class FaceRecognitionService:
         try:
             face_locations = face_recognition.face_locations(
                 image, 
-                model=method
+                model=method,
+                number_of_times_to_upsample=1
             )
+            # Limit number of faces if specified
+            if max_faces and len(face_locations) > max_faces:
+                # Sort by face size (largest first)
+                face_locations = sorted(
+                    face_locations,
+                    key=lambda loc: (loc[2] - loc[0]) * (loc[1] - loc[3]),
+                    reverse=True
+            )[:max_faces]
+            
             return face_locations
         except Exception as e:
             logger.error(f"Error detecting faces: {e}")
@@ -220,13 +232,24 @@ class FaceRecognitionService:
         
         await mongo_db.face_encodings.insert_one(face_encoding_doc.dict())
         
+        # Determine adaptive threshold
+        custom_threshold = None
+        if hasattr(settings, 'FACE_ADAPTIVE_THRESHOLD_ENABLED') and settings.FACE_ADAPTIVE_THRESHOLD_ENABLED:
+            if quality_score >= 0.7:
+                custom_threshold = getattr(settings, 'FACE_HIGH_QUALITY_THRESHOLD', 0.5)
+            elif quality_score <= 0.4:
+                custom_threshold = getattr(settings, 'FACE_LOW_QUALITY_THRESHOLD', 0.7)
+        
         # Store metadata in PostgreSQL
         face_record = Face(
             user_id=user.id,
             label=label,
             encoding_id=encoding_id,
+            encoding_count=1,
             confidence_score=1.0,
             quality_score=quality_score,
+            average_quality=quality_score,
+            custom_threshold=custom_threshold,
             is_active=True,
             is_verified=True
         )
@@ -245,6 +268,8 @@ class FaceRecognitionService:
             "label": label,
             "confidence_score": 1.0,
             "quality_score": quality_score,
+            "encoding_count": 1,
+            "custom_threshold": custom_threshold,
             "detection_time_ms": elapsed_time,
             "message": f"Face '{label}' enrolled successfully"
         }
@@ -301,6 +326,9 @@ class FaceRecognitionService:
                 "confidence": 0.0,
                 "num_faces_detected": 0,
                 "detection_time_ms": elapsed_time,
+                "faces": [],                    
+                "primary_user_id": None,       
+                "primary_username": None,
                 "message": "No face detected"
             }
         
@@ -313,6 +341,9 @@ class FaceRecognitionService:
                 "confidence": 0.0,
                 "num_faces_detected": num_faces,
                 "detection_time_ms": elapsed_time,
+                "faces": [],                    
+                "primary_user_id": None,       
+                "primary_username": None,
                 "message": f"Multiple faces detected ({num_faces}). Please ensure only one person."
             }
         
@@ -329,6 +360,9 @@ class FaceRecognitionService:
                 "confidence": 0.0,
                 "num_faces_detected": 1,
                 "detection_time_ms": elapsed_time,
+                "faces": [],                    
+                "primary_user_id": None,       
+                "primary_username": None,
                 "message": "Failed to encode detected face"
             }
         
@@ -345,6 +379,9 @@ class FaceRecognitionService:
                 "confidence": 0.0,
                 "num_faces_detected": 1,
                 "detection_time_ms": elapsed_time,
+                "faces": [],                    
+                "primary_user_id": None,       
+                "primary_username": None,
                 "message": "No enrolled faces in system"
             }
         
@@ -399,6 +436,23 @@ class FaceRecognitionService:
                 
                 logger.info(f"Face recognized: {user.username} (confidence: {confidence:.2f})")
                 
+                top, right, bottom, left = face_location
+
+                detected_face = {
+                    "user_id": user.id,
+                    "username": user.username,
+                    "face_id": None,
+                    "confidence": confidence,
+                    "bbox": {
+                        "top": int(top), 
+                        "right": int(right), 
+                        "bottom": int(bottom), 
+                        "left": int(left)
+                    },
+                    "quality_score": 0.0,
+                    "is_known": True
+                }
+                
                 return {
                     "recognized": True,
                     "user_id": user.id,
@@ -406,6 +460,9 @@ class FaceRecognitionService:
                     "confidence": confidence,
                     "num_faces_detected": 1,
                     "detection_time_ms": elapsed_time,
+                    "faces": [detected_face],                    
+                    "primary_user_id": user.id,       
+                    "primary_username": user.username,
                     "message": f"Welcome back, {user.username}!"
                 }
         
@@ -427,5 +484,8 @@ class FaceRecognitionService:
             "confidence": 0.0,
             "num_faces_detected": 1,
             "detection_time_ms": elapsed_time,
+            "faces": [],                    
+            "primary_user_id": None,       
+            "primary_username": None,
             "message": "Face not recognized"
         }
