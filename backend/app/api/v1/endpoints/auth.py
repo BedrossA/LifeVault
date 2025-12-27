@@ -1,7 +1,7 @@
 """Authentication API endpoints"""
-from fastapi import APIRouter, Depends, HTTPException, status, Request
+from fastapi import APIRouter, Depends, HTTPException, status, Request, Form
 from sqlalchemy.orm import Session
-from typing import Any
+from typing import Any, Annotated
 
 from app.db.base import get_db
 from app.schemas.user import UserCreate, UserLogin, UserResponse
@@ -20,7 +20,7 @@ def register(user_data: UserCreate, db: Session = Depends(get_db)) -> Any:
     return user
 
 @router.post("/login", response_model=Token, dependencies=[Depends(rate_limit_login)])
-async def login(request: Request, credentials: UserLogin, db: Session = Depends(get_db)) -> Any:
+async def login(request: Request, credentials: Annotated[UserLogin, Form()], db: Session = Depends(get_db)) -> Any:
     """Login user and create session"""
     ip_address = request.client.host
     user_agent = request.headers.get("user-agent", "unknown")
