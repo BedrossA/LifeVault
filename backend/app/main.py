@@ -10,7 +10,7 @@ from app.core.logging import logger
 from app.db.base import init_db
 from app.db.mongodb import connect_mongodb, close_mongodb
 from app.db.redis import connect_redis, close_redis
-from app.api.v1.endpoints import auth, face
+from app.api.v1.endpoints import auth, face, analytics
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -78,11 +78,11 @@ app.include_router(
     prefix=f"{settings.API_V1_PREFIX}/face",
     tags=["Face Recognition"]
     )
-#app.include_router(
-#    analytics.router,
-#   prefix=f"{settings.API_V1_PREFIX}/analytics",
-#    tags=["Analytics"]
-#)
+app.include_router(
+    analytics.router,
+   prefix=f"{settings.API_V1_PREFIX}/analytics",
+    tags=["Analytics"]
+)
 
 @app.get("/")
 async def root():
