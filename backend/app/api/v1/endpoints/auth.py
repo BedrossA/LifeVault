@@ -17,6 +17,8 @@ from app.core import security
 from app.core.config import settings
 from app.core.deps import get_current_active_user
 
+logger = logging.getLogger(__name__)
+
 router = APIRouter()
 
 @router.post("/login", response_model=Token)
