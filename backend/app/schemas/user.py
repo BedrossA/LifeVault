@@ -1,5 +1,5 @@
 """User schemas for request/response validation"""
-from pydantic import BaseModel, EmailStr, Field, field_validator
+from pydantic import BaseModel, EmailStr, Field, field_validator, ConfigDict
 from typing import Optional
 from datetime import datetime, UTC
 
@@ -39,6 +39,7 @@ class UserLogin(BaseModel):
     password: str
 
 class UserResponse(UserBase):
+    model_config=ConfigDict(from_attributes = True)
     """Schema for user response"""
     id: int
     uuid: str
@@ -48,8 +49,7 @@ class UserResponse(UserBase):
     created_at: datetime
     last_login: Optional[datetime] = None
     
-    class ConfigDict:
-        from_attributes = True
+
 
 class UserUpdate(BaseModel):
     """Schema for user profile update"""
