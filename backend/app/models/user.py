@@ -1,10 +1,12 @@
-"""PostgreSQL User model"""
-from sqlalchemy import Column, Integer, String, Boolean, DateTime
+"""Complete User models for PostgreSQL"""
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey, Text
 from sqlalchemy.sql import func
+from datetime import datetime, UTC
 from app.db.base import Base
 import uuid
 
 class User(Base):
+    """User model"""
     __tablename__ = "users"
     
     id = Column(Integer, primary_key=True, index=True)
@@ -29,8 +31,46 @@ class User(Base):
     last_login_ip = Column(String, nullable=True)
     
     # Timestamps
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime(timezone=True), default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
     
     def __repr__(self):
         return f"<User {self.username}>"
+
+
+class LoginHistory(Base):
+    """Login history tracking"""
+    __tablename__ = "login_history"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    
+    # Login details
+    ip_address = Column(String, nullable=True)
+    user_agent = Column(String, nullable=True)
+    success = Column(Boolean, default=True)
+    
+    # Timestamp
+    timestamp = Column(DateTime(timezone=True), default=lambda: datetime.now(UTC))
+    
+    def __repr__(self):
+        return f"<LoginHistory user_id={self.user_id} success={self.success}>"
+
+
+class UserActivity(Base):
+    """User activity log"""
+    __tablename__ = "user_activity"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    
+    # Activity details
+    action = Column(String, nullable=False)  # e.g., "face_enrolled", "analytics_created"
+    details = Column(Text, nullable=True)  # Additional JSON or text details
+    ip_address = Column(String, nullable=True)
+    
+    # Timestamp
+    timestamp = Column(DateTime(timezone=True), default=lambda: datetime.now(UTC))
+    
+    def __repr__(self):
+        return f"<UserActivity user_id={self.user_id} action={self.action}>"
