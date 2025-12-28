@@ -11,7 +11,7 @@ interface ProtectedRouteProps {
 }
 
 export function ProtectedRoute({ children }: ProtectedRouteProps) {
-  const { isAuthenticated, isLoading, refreshAuth, accessToken } = useAuthStore();
+  const { isAuthenticated, isLoading, refreshAuth} = useAuthStore();
 
   useEffect(() => {
     // If we have a token but no authenticated state, try to refresh

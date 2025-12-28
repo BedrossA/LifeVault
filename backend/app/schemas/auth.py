@@ -28,10 +28,20 @@ class Token(BaseModel):
     access_token: str
     refresh_token: str
     token_type: str = "bearer"
+    expires_in: int
 
 class TokenRefresh(BaseModel):
     """Token refresh request"""
     refresh_token: str
+
+class PasswordResetRequest(BaseModel):
+    """Password reset request"""
+    email: EmailStr
+
+class PasswordReset(BaseModel):
+    """Password reset"""
+    token: str
+    new_password: str = Field(..., min_length=8)
 
 # Login history schemas
 class LoginHistoryResponse(BaseModel):
