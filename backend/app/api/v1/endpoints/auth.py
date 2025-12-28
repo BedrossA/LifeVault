@@ -8,7 +8,7 @@ from typing import List
 from app.db.base import get_db
 from app.db.redis import get_redis
 from app.schemas.auth import (
-    UserCreate, UserResponse, Token, LoginHistoryResponse, UserActivityResponse
+    UserCreate, UserResponse, Token, TokenRefresh, LoginHistoryResponse, UserActivityResponse
 )
 from app.models.user import User, LoginHistory, UserActivity
 from app.core import security
@@ -89,7 +89,8 @@ async def login(
     return {
         "access_token": access_token,
         "refresh_token": refresh_token,
-        "token_type": "bearer"
+        "token_type": "bearer",
+        "expires_in": settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60
     }
 
 
@@ -138,7 +139,7 @@ def register(
 
 @router.post("/refresh", response_model=Token)
 async def refresh_token(
-    refresh_token: str,
+    token_data: TokenRefresh,
     db: Session = Depends(get_db),
     redis = Depends(get_redis)
 ):
@@ -149,7 +150,7 @@ async def refresh_token(
     """
     # Verify refresh token
     try:
-        payload = security.decode_token(refresh_token)
+        payload = security.decode_token(token_data.refresh_token)
         user_id = int(payload.get("sub"))
     except Exception:
         raise HTTPException(
@@ -160,7 +161,7 @@ async def refresh_token(
     
     # Check if refresh token is in Redis
     stored_token = await redis.get(f"refresh_token:{user_id}")
-    if not stored_token or stored_token.decode() != refresh_token:
+    if not stored_token or stored_token.decode() != token_data.refresh_token:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Refresh token revoked or expired",
@@ -194,7 +195,8 @@ async def refresh_token(
     return {
         "access_token": new_access_token,
         "refresh_token": new_refresh_token,
-        "token_type": "bearer"
+        "token_type": "bearer",
+        "expires_in": settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60
     }
 
 
