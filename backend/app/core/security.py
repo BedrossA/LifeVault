@@ -48,3 +48,9 @@ def decode_token(token: str) -> Optional[Dict[str, Any]]:
         # This will print to your RPi console so you can see the EXACT error
         print(f"JWT Decode Error: {str(e)}")
         return None
+
+def create_password_reset_token(user_id: int) -> str:
+    """Create a secure password reset token"""
+    # Use a URL-safe random token instead of JWT for password reset
+    # This is simpler and doesn't require decoding
+    return secrets.token_urlsafe(32)

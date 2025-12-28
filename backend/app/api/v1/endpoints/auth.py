@@ -4,11 +4,13 @@ from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from datetime import timedelta, datetime, UTC
 from typing import List
+import logging
 
 from app.db.base import get_db
 from app.db.redis import get_redis
 from app.schemas.auth import (
-    UserCreate, UserResponse, Token, TokenRefresh, LoginHistoryResponse, UserActivityResponse
+    UserCreate, UserResponse, Token, TokenRefresh, LoginHistoryResponse, UserActivityResponse,
+    PasswordResetRequest, PasswordReset
 )
 from app.models.user import User, LoginHistory, UserActivity
 from app.core import security
@@ -264,3 +266,84 @@ def get_user_activity(
     ).order_by(UserActivity.timestamp.desc()).limit(limit).all()
     
     return activity
+
+
+@router.post("/forgot-password")
+async def forgot_password(
+    request_data: PasswordResetRequest,
+    db: Session = Depends(get_db),
+    redis = Depends(get_redis)
+):
+    """
+    Request password reset
+    
+    Sends a password reset token to the user's email address.
+    For security, always returns success even if email doesn't exist.
+    """
+    user = db.query(User).filter(User.email == request_data.email).first()
+    
+    if user:
+        # Generate reset token (valid for 1 hour)
+        reset_token = security.create_password_reset_token(user.id)
+        
+        # Store token in Redis (expires in 1 hour)
+        await redis.setex(
+            f"password_reset:{reset_token}",
+            3600,  # 1 hour
+            str(user.id)
+        )
+        
+        # TODO: Send email with reset link
+        # For now, we'll just log it (in production, use email service)
+        logger.info(f"Password reset token for {user.email}: {reset_token}")
+        # In production: send_email(user.email, reset_token)
+    
+    # Always return success for security (don't reveal if email exists)
+    return {"message": "If an account with that email exists, a password reset link has been sent."}
+
+
+@router.post("/reset-password")
+async def reset_password(
+    reset_data: PasswordReset,
+    db: Session = Depends(get_db),
+    redis = Depends(get_redis)
+):
+    """
+    Reset password using reset token
+    
+    - **token**: Password reset token from email
+    - **new_password**: New password (min 8 characters)
+    """
+    # Verify token
+    try:
+        user_id_str = await redis.get(f"password_reset:{reset_data.token}")
+        if not user_id_str:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid or expired reset token"
+            )
+        
+        user_id = int(user_id_str.decode())
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid or expired reset token"
+        )
+    
+    # Get user
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+    
+    # Update password
+    user.hashed_password = security.get_password_hash(reset_data.new_password)
+    user.failed_login_attempts = 0  # Reset failed attempts
+    db.commit()
+    
+    # Delete reset token (one-time use)
+    await redis.delete(f"password_reset:{reset_data.token}")
+    
+    return {"message": "Password has been successfully reset"}

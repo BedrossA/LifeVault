@@ -15,6 +15,16 @@ export interface UserCreate extends UserBase {
 export interface UserLogin {
   username: string;
   password: string;
+  rememberMe?: boolean;
+}
+
+export interface PasswordResetRequest {
+  email: string;
+}
+
+export interface PasswordReset {
+  token: string;
+  new_password: string;
 }
 
 export interface UserResponse extends UserBase {

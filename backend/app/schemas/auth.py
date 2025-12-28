@@ -34,6 +34,15 @@ class TokenRefresh(BaseModel):
     """Token refresh request"""
     refresh_token: str
 
+class PasswordResetRequest(BaseModel):
+    """Password reset request"""
+    email: EmailStr
+
+class PasswordReset(BaseModel):
+    """Password reset"""
+    token: str
+    new_password: str = Field(..., min_length=8)
+
 # Login history schemas
 class LoginHistoryResponse(BaseModel):
     """Login history entry"""

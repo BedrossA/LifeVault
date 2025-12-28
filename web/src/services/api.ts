@@ -15,7 +15,9 @@ import type {
   TokenRefresh,
   LoginHistory,
   UserActivity,
-  ApiError 
+  ApiError,
+  PasswordResetRequest,
+  PasswordReset
 } from '../types';
 
 // Base URL configuration (Vite Proxy for dev, Env variable for production)
@@ -147,6 +149,16 @@ class ApiClient {
   async getUserActivity(limit: number = 20): Promise<UserActivity[]> {
     const response = await this.client.get<UserActivity[]>(`/auth/activity?limit=${limit}`);
     return response.data;
+  }
+
+  // --- Password Reset Endpoints ---
+
+  async requestPasswordReset(data: PasswordResetRequest): Promise<void> {
+    await this.client.post('/auth/forgot-password', data);
+  }
+
+  async resetPassword(data: PasswordReset): Promise<void> {
+    await this.client.post('/auth/reset-password', data);
   }
 }
 
