@@ -1,49 +1,57 @@
 """FastAPI dependencies"""
-from fastapi import Depends, HTTPException, status, Request
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi import Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer  # ← ADD THIS
+from jose import JWTError, jwt
 from sqlalchemy.orm import Session
+
 from app.db.base import get_db
 from app.models.user import User
-from app.core.security import decode_token
-from app.core.rate_limiter import check_rate_limit
+from app.core import security
 from app.core.config import settings
 
-security = HTTPBearer()
+# OAuth2 scheme for token extraction
+# This creates the "Authorize" button in Swagger UI
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")  # ← ADD THIS
 
-async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security),
-                           db: Session = Depends(get_db)) -> User:
+
+def get_current_user(
+    token: str = Depends(oauth2_scheme),  # ← CHANGED from Header
+    db: Session = Depends(get_db)
+) -> User:
+    """
+    Get current user from JWT token
+    Uses OAuth2PasswordBearer for automatic token extraction
+    """
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    
     try:
-        # 1. Print the token to ensure it's actually arriving
-        print(f"DEBUG: Token: {credentials.credentials}") 
-        
-        payload = decode_token(credentials.credentials)
-        print(f"DEBUG: Decoded payload = {payload}")
-        
-        if not payload:
-            # This means decode_token returned None (likely a JWTError)
-            raise HTTPException(status_code=401, detail="Token decode failed")
+        payload = security.decode_token(token)
+        user_id: str = payload.get("sub")
+        if user_id is None:
+            raise credentials_exception
+    except JWTError:
+        raise credentials_exception
+    
+    user = db.query(User).filter(User.id == int(user_id)).first()
+    if user is None:
+        raise credentials_exception
+    
+    return user
 
-        if payload.get("type") != "access":
-            raise HTTPException(status_code=401, detail="Not an access token")
 
-        user_id = payload.get("sub")
-        user = db.query(User).filter(User.id == int(user_id)).first()
-        
-        if not user:
-            raise HTTPException(status_code=401, detail="User not found")
-            
-        return user
-    except Exception as e:
-        # This will show you if it's a ValueError, AttributeError, etc.
-        print(f"DEBUG: Decode Error = {str(e)}")
-        raise HTTPException(status_code=401, detail="Token invalid")
-
-async def get_current_active_user(current_user: User = Depends(get_current_user)) -> User:
+def get_current_active_user(
+    current_user: User = Depends(get_current_user)
+) -> User:
+    """
+    Get current active user (not disabled)
+    """
     if not current_user.is_active:
-        raise HTTPException(status_code=403, detail="Inactive user")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Inactive user"
+        )
     return current_user
-
-async def rate_limit_login(request: Request):
-    key = f"login:{request.client.host}"
-    if not await check_rate_limit(key, settings.RATE_LIMIT_LOGIN, settings.RATE_LIMIT_WINDOW):
-        raise HTTPException(status_code=429, detail="Too many login attempts")

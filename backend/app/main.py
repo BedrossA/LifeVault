@@ -47,11 +47,19 @@ async def lifespan(app: FastAPI):
     await close_redis()
     logger.info("Databases closed")
 
+# Define OpenAPI Tags for better documentation organization
+tags_metadata = [
+    {"name": "Authentication", "description": "User authentication and JWT management"},
+    {"name": "Face Recognition", "description": "Biometric enrollment and verification"},
+    {"name": "Analytics", "description": "Personal data insights and tracking"},
+]
+
 # Create FastAPI app
 app = FastAPI(
     title=settings.APP_NAME,
     version=settings.APP_VERSION,
     description="LifeVault - Encrypted Personal Analytics Platform with Face Recognition",
+    openapi_tags=tags_metadata,
     docs_url="/docs",
     redoc_url="/redoc",
     openapi_url="/openapi.json",
