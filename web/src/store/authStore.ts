@@ -48,8 +48,16 @@ export const useAuthStore = create<AuthState>()(
           
           // 2. Store tokens in localStorage FIRST (before making any other API calls)
           // This ensures the interceptor can use them immediately
+          // If rememberMe is true, tokens persist longer (handled by backend token expiry)
           localStorage.setItem('access_token', tokenData.access_token);
           localStorage.setItem('refresh_token', tokenData.refresh_token);
+          
+          // Store rememberMe preference
+          if (credentials.rememberMe) {
+            localStorage.setItem('remember_me', 'true');
+          } else {
+            localStorage.removeItem('remember_me');
+          }
 
           // 3. Update Zustand state with tokens
           set({
