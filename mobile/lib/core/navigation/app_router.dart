@@ -9,6 +9,9 @@ import '../../features/dashboard/pages/dashboard_page.dart';
 import '../../features/analytics/pages/analytics_page.dart';
 import '../../features/face/pages/face_recognition_page.dart';
 import '../../features/profile/pages/profile_page.dart';
+import '../../features/settings/pages/settings_page.dart';
+import '../../features/auth/pages/login_history_page.dart';
+import '../../features/auth/pages/activity_page.dart';
 import '../constants/app_constants.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
@@ -47,6 +50,14 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const RegisterPage(),
       ),
       GoRoute(
+        path: '/login-history',
+        builder: (context, state) => const LoginHistoryPage(),
+      ),
+      GoRoute(
+        path: '/activity',
+        builder: (context, state) => const ActivityPage(),
+      ),
+      GoRoute(
         path: AppConstants.routeHome,
         builder: (context, state) => const HomePage(),
         routes: [
@@ -65,6 +76,10 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: 'profile',
             builder: (context, state) => const ProfilePage(),
+          ),
+          GoRoute(
+            path: 'settings',
+            builder: (context, state) => const SettingsPage(),
           ),
         ],
       ),
