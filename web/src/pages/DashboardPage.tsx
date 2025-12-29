@@ -27,13 +27,12 @@ export function DashboardPage() {
     start: format(subDays(new Date(), 30), 'yyyy-MM-dd'),
     end: format(new Date(), 'yyyy-MM-dd'),
   });
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [showEntryForm, setShowEntryForm] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     loadDashboardData();
-  }, [dateRange, selectedCategory]);
+  }, [dateRange]);
 
   const loadDashboardData = async () => {
     setIsLoading(true);
@@ -46,7 +45,7 @@ export function DashboardPage() {
           trends: [],
         })),
         analyticsApi.getEntries(
-          selectedCategory !== 'all' ? selectedCategory : undefined,
+          undefined, // Show all categories
           dateRange.start,
           dateRange.end
         ).catch(() => []),
@@ -92,13 +91,13 @@ export function DashboardPage() {
     loadDashboardData();
   };
 
-  const handleExport = async (format: 'csv' | 'json' = 'json') => {
+  const handleExport = async (exportFormat: 'csv' | 'json' = 'json') => {
     try {
-      const blob = await analyticsApi.exportData(format, dateRange);
+      const blob = await analyticsApi.exportData(exportFormat, dateRange);
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `lifevault-analytics-${format(new Date(), 'yyyy-MM-dd')}.${format}`;
+      a.download = `lifevault-analytics-${format(new Date(), 'yyyy-MM-dd')}.${exportFormat}`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
@@ -155,24 +154,30 @@ export function DashboardPage() {
     <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
       <div className="px-4 py-6 sm:px-0 space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">
-              Welcome back, {user?.username || 'User'}!
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">
+              Welcome back, {(() => {
+                if (user?.full_name) {
+                  const fullName = user.full_name;
+                  return fullName;
+                }
+                return user?.username || 'User';
+              })()}!
             </h1>
-            <p className="mt-1 text-sm text-gray-500">Your personal analytics dashboard</p>
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Your personal analytics dashboard</p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2 w-full sm:w-auto">
             <button
               onClick={() => setShowEntryForm(!showEntryForm)}
-              className="btn btn-primary"
+              className="btn btn-primary flex-1 sm:flex-initial min-w-[120px]"
             >
               {showEntryForm ? 'Cancel' : '+ Add Entry'}
             </button>
-            <button onClick={() => handleExport('json')} className="btn btn-secondary">
+            <button onClick={() => handleExport('json')} className="btn btn-secondary flex-1 sm:flex-initial min-w-[120px]">
               Export JSON
             </button>
-            <button onClick={() => handleExport('csv')} className="btn btn-secondary">
+            <button onClick={() => handleExport('csv')} className="btn btn-secondary flex-1 sm:flex-initial min-w-[120px]">
               Export CSV
             </button>
           </div>
@@ -222,7 +227,7 @@ export function DashboardPage() {
           <div className="lg:col-span-2">
             {goals.length > 0 && (
               <div>
-                <h2 className="text-xl font-bold text-gray-900 mb-4">Goals Progress</h2>
+                <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4">Goals Progress</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {goals.map((goal) => (
                     <ProgressBar
