@@ -51,7 +51,7 @@ export function DataEntryForm({
 
   return (
     <div className="card">
-      <h3 className="text-lg font-semibold mb-4">Add Analytics Entry</h3>
+      <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">Add Analytics Entry</h3>
       <form onSubmit={handleSubmit} className="space-y-4">
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
@@ -59,9 +59,9 @@ export function DataEntryForm({
           </div>
         )}
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="category" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Category
             </label>
             <select
@@ -80,7 +80,7 @@ export function DataEntryForm({
           </div>
 
           <div>
-            <label htmlFor="metric" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="metric" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Metric
             </label>
             <select
@@ -99,9 +99,9 @@ export function DataEntryForm({
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label htmlFor="value" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="value" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Value
             </label>
             <input
@@ -116,7 +116,7 @@ export function DataEntryForm({
           </div>
 
           <div>
-            <label htmlFor="unit" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="unit" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Unit (optional)
             </label>
             <input
@@ -131,7 +131,7 @@ export function DataEntryForm({
         </div>
 
         <div>
-          <label htmlFor="notes" className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="notes" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             Notes (optional)
           </label>
           <textarea
@@ -144,11 +144,11 @@ export function DataEntryForm({
           />
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex flex-col sm:flex-row gap-2">
           <button
             type="submit"
             disabled={isSubmitting}
-            className="btn btn-primary flex-1"
+            className="btn btn-primary flex-1 w-full sm:w-auto"
           >
             {isSubmitting ? 'Saving...' : 'Save Entry'}
           </button>
@@ -156,7 +156,7 @@ export function DataEntryForm({
             <button
               type="button"
               onClick={onCancel}
-              className="btn btn-secondary"
+              className="btn btn-secondary w-full sm:w-auto"
             >
               Cancel
             </button>

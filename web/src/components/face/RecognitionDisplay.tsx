@@ -73,9 +73,9 @@ export function RecognitionDisplay({ mode = 'single' }: RecognitionDisplayProps)
 
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-4 sm:p-6">
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 sm:p-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-2 mb-4">
-        <h3 className="text-lg sm:text-xl font-semibold">
+        <h3 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-gray-100">
           Face Recognition {mode === 'multi' && '(Multi-Face)'}
         </h3>
         <div className="flex flex-col sm:flex-row gap-2">
@@ -104,13 +104,13 @@ export function RecognitionDisplay({ mode = 'single' }: RecognitionDisplayProps)
       </div>
 
       {error && (
-        <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded">
+        <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 rounded">
           {error}
         </div>
       )}
 
       {isRecognizing && (
-        <div className="mb-4 p-3 bg-blue-50 border border-blue-200 text-blue-700 rounded">
+        <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-400 rounded">
           Recognizing faces...
         </div>
       )}
@@ -131,7 +131,7 @@ export function RecognitionDisplay({ mode = 'single' }: RecognitionDisplayProps)
       {result && imageUrl && (
         <div className="space-y-4">
           {/* Image with face boxes */}
-          <div className="relative bg-gray-100 rounded-lg overflow-hidden">
+          <div className="relative bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden">
             <img
               ref={imageRef}
               src={imageUrl}
@@ -234,61 +234,61 @@ export function RecognitionDisplay({ mode = 'single' }: RecognitionDisplayProps)
             )}
           </div>
 
-          <div className="p-4 bg-gray-50 rounded-lg">
+          <div className="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
               <div>
-                <p className="text-sm text-gray-600">Faces Detected</p>
-                <p className="text-2xl font-bold">{result.num_faces_detected}</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Faces Detected</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{result.num_faces_detected}</p>
               </div>
               <div>
-                <p className="text-sm text-gray-600">Recognized</p>
-                <p className="text-2xl font-bold">
+                <p className="text-sm text-gray-600 dark:text-gray-400">Recognized</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
                   {result.recognized ? 'Yes' : 'No'}
                 </p>
               </div>
               <div>
-                <p className="text-sm text-gray-600">Detection Time</p>
-                <p className="text-2xl font-bold">
+                <p className="text-sm text-gray-600 dark:text-gray-400">Detection Time</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
                   {result.detection_time_ms.toFixed(0)}ms
                 </p>
               </div>
               <div>
-                <p className="text-sm text-gray-600">Primary User</p>
-                <p className="text-lg font-semibold">
+                <p className="text-sm text-gray-600 dark:text-gray-400">Primary User</p>
+                <p className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                   {result.primary_username || 'N/A'}
                 </p>
               </div>
             </div>
-            <p className="text-sm text-gray-700">{result.message}</p>
+            <p className="text-sm text-gray-700 dark:text-gray-300">{result.message}</p>
           </div>
 
           {/* Face Details */}
           {result.faces.length > 0 && (
             <div className="space-y-2">
-              <h4 className="font-medium">Detected Faces:</h4>
+              <h4 className="font-medium text-gray-900 dark:text-gray-100">Detected Faces:</h4>
               {result.faces.map((face, index) => (
                 <div
                   key={index}
                   className={`p-3 rounded ${
                     face.is_known
-                      ? 'bg-green-50 border border-green-200'
-                      : 'bg-yellow-50 border border-yellow-200'
+                      ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800'
+                      : 'bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800'
                   }`}
                 >
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="font-medium">
+                      <p className="font-medium text-gray-900 dark:text-gray-100">
                         {face.is_known
                           ? `Known: ${face.username || 'User'}`
                           : 'Unknown Face'}
                       </p>
-                      <p className="text-sm text-gray-600">
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
                         Confidence: {(face.confidence * 100).toFixed(1)}% | Quality:{' '}
                         {face.quality_score != null ? (face.quality_score * 100).toFixed(1) : 'N/A'}%
                       </p>
                     </div>
                     {face.face_id && (
-                      <span className="text-xs text-gray-500">
+                      <span className="text-xs text-gray-500 dark:text-gray-400">
                         Face ID: {face.face_id}
                       </span>
                     )}
@@ -301,8 +301,8 @@ export function RecognitionDisplay({ mode = 'single' }: RecognitionDisplayProps)
       )}
 
       {!isCapturing && !result && !imageUrl && (
-        <div className="bg-gray-50 rounded-lg p-8 text-center">
-          <p className="text-gray-500">
+        <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-8 text-center">
+          <p className="text-gray-500 dark:text-gray-400">
             Use camera or upload an image to recognize faces
           </p>
         </div>
@@ -310,7 +310,7 @@ export function RecognitionDisplay({ mode = 'single' }: RecognitionDisplayProps)
 
       {/* Clean up image URL when component unmounts or image changes */}
       {imageUrl && !result && (
-        <div className="relative bg-gray-100 rounded-lg overflow-hidden">
+        <div className="relative bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden">
           <img
             src={imageUrl}
             alt="Uploaded image"
