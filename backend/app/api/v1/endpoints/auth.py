@@ -165,7 +165,8 @@ async def refresh_token(
     
     # Check if refresh token is in Redis
     stored_token = await redis.get(f"refresh_token:{user_id}")
-    if not stored_token or stored_token.decode() != token_data.refresh_token:
+    # Redis returns string when decode_responses=True, so no need to decode
+    if not stored_token or stored_token != token_data.refresh_token:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Refresh token revoked or expired",
@@ -325,7 +326,8 @@ async def reset_password(
                 detail="Invalid or expired reset token"
             )
         
-        user_id = int(user_id_str.decode())
+        # Redis returns string when decode_responses=True, so no need to decode
+        user_id = int(user_id_str)
     except Exception:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
