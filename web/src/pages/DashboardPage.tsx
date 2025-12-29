@@ -16,6 +16,7 @@ import { PredictiveChart } from '../components/dashboard/PredictiveChart';
 import { Timeline } from '../components/dashboard/Timeline';
 import { DataEntryForm } from '../components/dashboard/DataEntryForm';
 import { GoalManager } from '../components/dashboard/GoalManager';
+import { notifySuccess, notifyError } from '../utils/notifications';
 import type { AnalyticsEntry, AnalyticsStats, Goal, DateRange, AnalyticsEntryCreate, GoalCreate } from '../types/analytics';
 
 export function DashboardPage() {
@@ -71,24 +72,44 @@ export function DashboardPage() {
   };
 
   const handleCreateEntry = async (data: AnalyticsEntryCreate) => {
-    await analyticsApi.createEntry(data);
-    setShowEntryForm(false);
-    loadDashboardData();
+    try {
+      await analyticsApi.createEntry(data);
+      setShowEntryForm(false);
+      notifySuccess('Entry Created', 'Your analytics entry has been saved successfully.');
+      loadDashboardData();
+    } catch (error) {
+      notifyError('Failed to Create Entry', 'Please try again.');
+    }
   };
 
   const handleCreateGoal = async (data: GoalCreate) => {
-    await analyticsApi.createGoal(data);
-    loadDashboardData();
+    try {
+      await analyticsApi.createGoal(data);
+      notifySuccess('Goal Created', 'Your new goal has been set.');
+      loadDashboardData();
+    } catch (error) {
+      notifyError('Failed to Create Goal', 'Please try again.');
+    }
   };
 
   const handleUpdateGoal = async (id: string, data: Partial<GoalCreate>) => {
-    await analyticsApi.updateGoal(id, data);
-    loadDashboardData();
+    try {
+      await analyticsApi.updateGoal(id, data);
+      notifySuccess('Goal Updated', 'Your goal has been updated.');
+      loadDashboardData();
+    } catch (error) {
+      notifyError('Failed to Update Goal', 'Please try again.');
+    }
   };
 
   const handleDeleteGoal = async (id: string) => {
-    await analyticsApi.deleteGoal(id);
-    loadDashboardData();
+    try {
+      await analyticsApi.deleteGoal(id);
+      notifySuccess('Goal Deleted', 'The goal has been removed.');
+      loadDashboardData();
+    } catch (error) {
+      notifyError('Failed to Delete Goal', 'Please try again.');
+    }
   };
 
   const handleExport = async (exportFormat: 'csv' | 'json' = 'json') => {
