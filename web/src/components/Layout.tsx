@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { Outlet, Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { ThemeToggle } from './ThemeToggle';
+import { NotificationContainer } from './NotificationContainer';
 
 export function Layout() {
   const { isAuthenticated, user, logout } = useAuthStore();
@@ -125,6 +126,7 @@ export function Layout() {
       <main className="w-full overflow-x-hidden">
         <Outlet />
       </main>
+      <NotificationContainer />
     </div>
   );
 }

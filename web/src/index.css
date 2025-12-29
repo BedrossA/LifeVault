@@ -28,5 +28,21 @@
   .card {
     @apply bg-white dark:bg-gray-800 rounded-lg shadow-md dark:shadow-gray-900/50 p-6;
   }
+
+  /* Notification animations */
+  @keyframes slide-in-from-right {
+    from {
+      transform: translateX(100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+
+  .animate-in {
+    animation: slide-in-from-right 0.3s ease-out;
+  }
 }
 
