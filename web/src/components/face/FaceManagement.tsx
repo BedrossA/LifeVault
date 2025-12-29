@@ -97,9 +97,9 @@ export function FaceManagement() {
 
   if (isLoading) {
     return (
-      <div className="bg-white rounded-lg shadow-md p-6">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
         <div className="text-center py-8">
-          <p className="text-gray-500">Loading faces...</p>
+          <p className="text-gray-500 dark:text-gray-400">Loading faces...</p>
         </div>
       </div>
     );
@@ -107,8 +107,8 @@ export function FaceManagement() {
 
   if (error) {
     return (
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <div className="p-4 bg-red-50 border border-red-200 text-red-700 rounded">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+        <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 rounded">
           {error}
         </div>
         <button onClick={loadData} className="btn btn-primary mt-4">
@@ -122,38 +122,38 @@ export function FaceManagement() {
     <div className="space-y-4 sm:space-y-6">
       {/* Statistics */}
       {stats && (
-        <div className="bg-white rounded-lg shadow-md p-4 sm:p-6">
-          <h3 className="text-lg sm:text-xl font-semibold mb-4">Face Recognition Statistics</h3>
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 sm:p-6">
+          <h3 className="text-lg sm:text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">Face Recognition Statistics</h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
             <div>
-              <p className="text-sm text-gray-600">Total Faces</p>
-              <p className="text-2xl font-bold">{stats.total_faces}</p>
-              <p className="text-xs text-gray-500">Max: {stats.max_faces}</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Total Faces</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{stats.total_faces}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-500">Max: {stats.max_faces}</p>
             </div>
             <div>
-              <p className="text-sm text-gray-600">Active Faces</p>
-              <p className="text-2xl font-bold">{stats.active_faces}</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Active Faces</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{stats.active_faces}</p>
             </div>
             <div>
-              <p className="text-sm text-gray-600">Total Encodings</p>
-              <p className="text-2xl font-bold">{stats.total_encodings}</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Total Encodings</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{stats.total_encodings}</p>
             </div>
             <div>
-              <p className="text-sm text-gray-600">Avg Quality</p>
-              <p className="text-2xl font-bold">
+              <p className="text-sm text-gray-600 dark:text-gray-400">Avg Quality</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
                 {stats.average_quality != null 
                   ? `${(stats.average_quality * 100).toFixed(1)}%`
                   : 'N/A'}
               </p>
             </div>
             <div>
-              <p className="text-sm text-gray-600">Recognitions</p>
-              <p className="text-2xl font-bold">{stats.total_recognitions}</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Recognitions</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{stats.total_recognitions}</p>
             </div>
             {stats.latest_enrollment && (
               <div>
-                <p className="text-sm text-gray-600">Last Enrollment</p>
-                <p className="text-sm font-semibold">
+                <p className="text-sm text-gray-600 dark:text-gray-400">Last Enrollment</p>
+                <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">
                   {format(new Date(stats.latest_enrollment), 'MMM d, yyyy')}
                 </p>
               </div>
@@ -163,9 +163,9 @@ export function FaceManagement() {
       )}
 
       {/* Face List */}
-      <div className="bg-white rounded-lg shadow-md p-4 sm:p-6">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 sm:p-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0 mb-4">
-          <h3 className="text-lg sm:text-xl font-semibold">My Enrolled Faces</h3>
+          <h3 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-gray-100">My Enrolled Faces</h3>
           <button onClick={loadData} className="btn btn-outline text-sm self-start sm:self-auto">
             Refresh
           </button>
@@ -173,7 +173,7 @@ export function FaceManagement() {
 
         {faces.length === 0 ? (
           <div className="text-center py-8">
-            <p className="text-gray-500">No faces enrolled yet</p>
+            <p className="text-gray-500 dark:text-gray-400">No faces enrolled yet</p>
           </div>
         ) : (
           <div className="space-y-3">
@@ -182,14 +182,14 @@ export function FaceManagement() {
                 key={face.id}
                 className={`p-4 rounded-lg border ${
                   face.is_active
-                    ? 'bg-green-50 border-green-200'
-                    : 'bg-gray-50 border-gray-200'
+                    ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
+                    : 'bg-gray-50 dark:bg-gray-700/50 border-gray-200 dark:border-gray-700'
                 }`}
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
-                      <h4 className="font-semibold">{face.label}</h4>
+                      <h4 className="font-semibold text-gray-900 dark:text-gray-100">{face.label}</h4>
                       {face.is_active ? (
                         <span className="px-2 py-1 bg-green-500 text-white text-xs rounded">
                           Active
@@ -202,24 +202,24 @@ export function FaceManagement() {
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2 text-sm">
                       <div>
-                        <span className="text-gray-600">Quality: </span>
-                        <span className="font-medium">
+                        <span className="text-gray-600 dark:text-gray-400">Quality: </span>
+                        <span className="font-medium text-gray-900 dark:text-gray-100">
                           {face.average_quality != null
                             ? `${(face.average_quality * 100).toFixed(1)}%`
                             : 'N/A'}
                         </span>
                       </div>
                       <div>
-                        <span className="text-gray-600">Encodings: </span>
-                        <span className="font-medium">{face.encoding_count}</span>
+                        <span className="text-gray-600 dark:text-gray-400">Encodings: </span>
+                        <span className="font-medium text-gray-900 dark:text-gray-100">{face.encoding_count}</span>
                       </div>
                       <div>
-                        <span className="text-gray-600">Recognitions: </span>
-                        <span className="font-medium">{face.recognition_count}</span>
+                        <span className="text-gray-600 dark:text-gray-400">Recognitions: </span>
+                        <span className="font-medium text-gray-900 dark:text-gray-100">{face.recognition_count}</span>
                       </div>
                       <div>
-                        <span className="text-gray-600">Created: </span>
-                        <span className="font-medium">
+                        <span className="text-gray-600 dark:text-gray-400">Created: </span>
+                        <span className="font-medium text-gray-900 dark:text-gray-100">
                           {format(new Date(face.created_at), 'MMM d, yyyy')}
                         </span>
                       </div>
@@ -258,13 +258,13 @@ export function FaceManagement() {
       {/* Face Details Modal */}
       {selectedFace && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-2xl font-semibold">{selectedFace.label}</h3>
+                <h3 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">{selectedFace.label}</h3>
                 <button
                   onClick={() => setSelectedFace(null)}
-                  className="text-gray-500 hover:text-gray-700"
+                  className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
                 >
                   ✕
                 </button>
@@ -273,51 +273,51 @@ export function FaceManagement() {
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <p className="text-sm text-gray-600">Face ID</p>
-                    <p className="font-medium">{selectedFace.id}</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Face ID</p>
+                    <p className="font-medium text-gray-900 dark:text-gray-100">{selectedFace.id}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-600">Status</p>
-                    <p className="font-medium">
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Status</p>
+                    <p className="font-medium text-gray-900 dark:text-gray-100">
                       {selectedFace.is_active ? 'Active' : 'Inactive'}
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-600">Encoding Count</p>
-                    <p className="font-medium">
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Encoding Count</p>
+                    <p className="font-medium text-gray-900 dark:text-gray-100">
                       {selectedFace.encoding_count} / 10
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-600">Quality Score</p>
-                    <p className="font-medium">
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Quality Score</p>
+                    <p className="font-medium text-gray-900 dark:text-gray-100">
                       {selectedFace.quality_score != null
                         ? `${(selectedFace.quality_score * 100).toFixed(1)}%`
                         : 'N/A'}
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-600">Average Quality</p>
-                    <p className="font-medium">
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Average Quality</p>
+                    <p className="font-medium text-gray-900 dark:text-gray-100">
                       {selectedFace.average_quality != null
                         ? `${(selectedFace.average_quality * 100).toFixed(1)}%`
                         : 'N/A'}
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-600">Recognition Count</p>
-                    <p className="font-medium">{selectedFace.recognition_count}</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Recognition Count</p>
+                    <p className="font-medium text-gray-900 dark:text-gray-100">{selectedFace.recognition_count}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-600">Created</p>
-                    <p className="font-medium">
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Created</p>
+                    <p className="font-medium text-gray-900 dark:text-gray-100">
                       {format(new Date(selectedFace.created_at), 'PPp')}
                     </p>
                   </div>
                   {selectedFace.last_recognized && (
                     <div>
-                      <p className="text-sm text-gray-600">Last Recognized</p>
-                      <p className="font-medium">
+                      <p className="text-sm text-gray-600 dark:text-gray-400">Last Recognized</p>
+                      <p className="font-medium text-gray-900 dark:text-gray-100">
                         {format(
                           new Date(selectedFace.last_recognized),
                           'PPp'
@@ -329,14 +329,14 @@ export function FaceManagement() {
 
                 {selectedFace.custom_threshold && (
                   <div>
-                    <p className="text-sm text-gray-600">Custom Threshold</p>
-                    <p className="font-medium">{selectedFace.custom_threshold}</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Custom Threshold</p>
+                    <p className="font-medium text-gray-900 dark:text-gray-100">{selectedFace.custom_threshold}</p>
                   </div>
                 )}
 
                 <div>
-                  <p className="text-sm text-gray-600 mb-1">Recommendation</p>
-                  <p className="text-sm text-gray-700 bg-blue-50 p-3 rounded">
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Recommendation</p>
+                  <p className="text-sm text-gray-700 dark:text-gray-300 bg-blue-50 dark:bg-blue-900/20 p-3 rounded">
                     {selectedFace.recommendation}
                   </p>
                 </div>

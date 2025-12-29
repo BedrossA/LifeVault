@@ -35,50 +35,52 @@ export function DateRangePicker({ onRangeChange, defaultRange }: DateRangePicker
   };
 
   return (
-    <div className="flex flex-wrap items-center gap-4">
-      <div className="flex gap-2">
+    <div className="flex flex-col sm:flex-row flex-wrap items-start sm:items-center gap-4">
+      <div className="flex flex-wrap gap-2">
         <button
           onClick={() => handleQuickSelect(7)}
-          className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50"
+          className="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
         >
           Last 7 days
         </button>
         <button
           onClick={() => handleQuickSelect(30)}
-          className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50"
+          className="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
         >
           Last 30 days
         </button>
         <button
           onClick={() => handleQuickSelect(90)}
-          className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50"
+          className="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
         >
           Last 90 days
         </button>
         <button
           onClick={() => handleQuickSelect(365)}
-          className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50"
+          className="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
         >
           Last year
         </button>
       </div>
-      <div className="flex items-center gap-2">
-        <input
-          type="date"
-          value={startDate}
-          onChange={(e) => setStartDate(e.target.value)}
-          className="px-3 py-1 text-sm border border-gray-300 rounded"
-        />
-        <span className="text-gray-500">to</span>
-        <input
-          type="date"
-          value={endDate}
-          onChange={(e) => setEndDate(e.target.value)}
-          className="px-3 py-1 text-sm border border-gray-300 rounded"
-        />
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
+        <div className="flex items-center gap-2 flex-1 sm:flex-initial">
+          <input
+            type="date"
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+            className="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded flex-1 sm:flex-initial min-w-0 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+          />
+          <span className="text-gray-500 dark:text-gray-400 whitespace-nowrap">to</span>
+          <input
+            type="date"
+            value={endDate}
+            onChange={(e) => setEndDate(e.target.value)}
+            className="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded flex-1 sm:flex-initial min-w-0 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+          />
+        </div>
         <button
           onClick={handleCustomRange}
-          className="px-3 py-1 text-sm bg-primary-600 text-white rounded hover:bg-primary-700"
+          className="px-3 py-1 text-sm bg-primary-600 text-white rounded hover:bg-primary-700 whitespace-nowrap w-full sm:w-auto"
         >
           Apply
         </button>
