@@ -12,6 +12,7 @@ import { ResetPasswordPage } from '../pages/ResetPasswordPage';
 import { DashboardPage } from '../pages/DashboardPage';
 import { ProfilePage } from '../pages/ProfilePage';
 import { ActivityPage } from '../pages/ActivityPage';
+import { FaceRecognitionPage } from '../pages/FaceRecognitionPage';
 
 export const router = createBrowserRouter([
   {
@@ -75,6 +76,14 @@ export const router = createBrowserRouter([
         element: (
           <ProtectedRoute>
             <ActivityPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'face-recognition',
+        element: (
+          <ProtectedRoute>
+            <FaceRecognitionPage />
           </ProtectedRoute>
         ),
       },
