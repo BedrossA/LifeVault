@@ -91,17 +91,17 @@ export function FaceEnrollment({ onEnrolled, onCancel }: FaceEnrollmentProps) {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-4 sm:p-6">
-      <h3 className="text-lg sm:text-xl font-semibold mb-4">Enroll New Face</h3>
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 sm:p-6">
+      <h3 className="text-lg sm:text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">Enroll New Face</h3>
 
       {success && (
-        <div className="mb-4 p-3 bg-green-50 border border-green-200 text-green-700 rounded">
+        <div className="mb-4 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-green-700 dark:text-green-400 rounded">
           {success}
         </div>
       )}
 
       {error && (
-        <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded">
+        <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 rounded">
           {error}
         </div>
       )}
@@ -109,7 +109,7 @@ export function FaceEnrollment({ onEnrolled, onCancel }: FaceEnrollmentProps) {
       <div className="space-y-4">
         {/* Label Input */}
         <div>
-          <label htmlFor="face-label" className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="face-label" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             Face Label
           </label>
           <input
@@ -121,14 +121,14 @@ export function FaceEnrollment({ onEnrolled, onCancel }: FaceEnrollmentProps) {
             className="input w-full"
             disabled={isEnrolling}
           />
-          <p className="mt-1 text-xs text-gray-500">
+          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
             Give this face a descriptive label
           </p>
         </div>
 
         {/* Image Source Selection */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             Image Source
           </label>
           <div className="flex flex-col sm:flex-row gap-2 mb-3">
@@ -165,7 +165,7 @@ export function FaceEnrollment({ onEnrolled, onCancel }: FaceEnrollmentProps) {
             height={480}
           />
         ) : capturedImage ? (
-          <div className="relative bg-gray-100 rounded-lg overflow-hidden aspect-video">
+          <div className="relative bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden aspect-video">
             <img
               src={URL.createObjectURL(capturedImage)}
               alt="Captured face"
@@ -179,8 +179,8 @@ export function FaceEnrollment({ onEnrolled, onCancel }: FaceEnrollmentProps) {
             </button>
           </div>
         ) : (
-          <div className="bg-gray-100 rounded-lg aspect-video flex items-center justify-center">
-            <p className="text-gray-500">No image selected</p>
+          <div className="bg-gray-100 dark:bg-gray-700 rounded-lg aspect-video flex items-center justify-center">
+            <p className="text-gray-500 dark:text-gray-400">No image selected</p>
           </div>
         )}
 

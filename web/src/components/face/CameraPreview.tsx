@@ -39,16 +39,38 @@ export function CameraPreview({
       setIsLoading(true);
       setError(null);
 
-      // Check if we're in a secure context (HTTPS or localhost)
-      const isSecureContext = window.isSecureContext || 
-        location.protocol === 'https:' || 
-        location.hostname === 'localhost' || 
-        location.hostname === '127.0.0.1';
-
-      if (!isSecureContext) {
-        throw new Error(
-          'Camera access requires a secure connection (HTTPS). Please use HTTPS or upload images instead.'
-        );
+      // Check if we're in a secure context
+      // getUserMedia requires HTTPS (or localhost/127.0.0.1 for development)
+      // Modern browsers expose isSecureContext which handles this automatically
+      const isLocalNetwork = /^192\.168\.|^10\.|^172\.(1[6-9]|2[0-9]|3[01])\./.test(location.hostname);
+      const isLocalhost = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+      
+      if (!window.isSecureContext) {
+        if (!isLocalhost && !isLocalNetwork) {
+          throw new Error(
+            'Camera access requires a secure connection (HTTPS). Please use HTTPS or upload images instead.'
+          );
+        }
+        
+        // Warn about HTTPS for local network access
+        if (isLocalNetwork && location.protocol !== 'https:') {
+          console.warn(
+            '⚠️ Security Warning: For secure camera access on local network (192.168.x.x), ' +
+            'please use HTTPS. Current connection is not secure.'
+          );
+          // Show a non-blocking warning to user
+          setTimeout(() => {
+            const warning = document.createElement('div');
+            warning.className = 'fixed bottom-4 right-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 text-yellow-800 dark:text-yellow-300 px-4 py-3 rounded-lg shadow-lg z-50 max-w-sm';
+            warning.innerHTML = `
+              <p class="font-medium mb-1">Security Notice</p>
+              <p class="text-sm">For secure access, use HTTPS on local network (192.168.x.x)</p>
+              <button onclick="this.parentElement.remove()" class="mt-2 text-xs underline">Dismiss</button>
+            `;
+            document.body.appendChild(warning);
+            setTimeout(() => warning.remove(), 10000);
+          }, 1000);
+        }
       }
 
       // Check if getUserMedia is available
