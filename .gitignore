@@ -63,3 +63,7 @@ test_*.db
 .vscode/
 .idea/
 *.sublime-*
+
+# Firebase
+/mobile/android/app/google-services.json 
+/mobile/ios/GoogleService-Info.plist
