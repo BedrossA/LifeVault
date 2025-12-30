@@ -112,5 +112,19 @@ class AuthApiService {
       throw ApiException.fromDioError(e);
     }
   }
+
+  Future<List<Map<String, dynamic>>> getUserActivity({int limit = 20}) async {
+    try {
+      final response = await _apiClient.dio.get(
+        AppConstants.authActivity,
+        queryParameters: {'limit': limit},
+      );
+
+      final List<dynamic> data = response.data;
+      return data.cast<Map<String, dynamic>>();
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    }
+  }
 }
 
