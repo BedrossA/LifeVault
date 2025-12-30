@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:camera/camera.dart';
+import 'dart:io';
+import '../services/face_api_service.dart';
+import '../../../core/services/camera_service.dart';
+import '../../../core/providers/services_provider.dart';
+import '../../../core/network/api_exception.dart';
 
 class FaceRecognitionPage extends ConsumerStatefulWidget {
   const FaceRecognitionPage({super.key});
@@ -11,11 +16,13 @@ class FaceRecognitionPage extends ConsumerStatefulWidget {
 }
 
 class _FaceRecognitionPageState extends ConsumerState<FaceRecognitionPage> {
+  final FaceApiService _faceApiService = FaceApiService();
   CameraController? _cameraController;
   List<CameraDescription>? _cameras;
   bool _isInitialized = false;
   bool _isProcessing = false;
   int _enrolledFaces = 0;
+  List<Map<String, dynamic>> _faces = [];
 
   @override
   void initState() {
@@ -26,14 +33,16 @@ class _FaceRecognitionPageState extends ConsumerState<FaceRecognitionPage> {
 
   Future<void> _initializeCamera() async {
     try {
-      _cameras = await availableCameras();
-      if (_cameras != null && _cameras!.isNotEmpty) {
-        _cameraController = CameraController(
-          _cameras![0],
-          ResolutionPreset.medium,
-        );
-        await _cameraController!.initialize();
-        setState(() => _isInitialized = true);
+      final cameraService = ref.read(cameraServiceProvider);
+      final initialized = await cameraService.initialize(
+        resolution: ResolutionPreset.medium,
+      );
+      
+      if (initialized && cameraService.controller != null) {
+        setState(() {
+          _cameraController = cameraService.controller;
+          _isInitialized = true;
+        });
       }
     } catch (e) {
       if (mounted) {
@@ -45,8 +54,23 @@ class _FaceRecognitionPageState extends ConsumerState<FaceRecognitionPage> {
   }
 
   Future<void> _loadFaceData() async {
-    // TODO: Load enrolled faces from API
-    setState(() => _enrolledFaces = 0);
+    try {
+      final faces = await _faceApiService.getMyFaces();
+      if (mounted) {
+        setState(() {
+          _faces = faces;
+          _enrolledFaces = faces.length;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        // Silently fail - user might not be logged in
+        setState(() {
+          _enrolledFaces = 0;
+          _faces = [];
+        });
+      }
+    }
   }
 
   @override
@@ -60,17 +84,71 @@ class _FaceRecognitionPageState extends ConsumerState<FaceRecognitionPage> {
 
     setState(() => _isProcessing = true);
     try {
-      await _cameraController!.takePicture();
-      // TODO: Send image to backend for enrollment
+      final imageFile = await _cameraController!.takePicture();
+      final file = File(imageFile.path);
+
+      // Show dialog to get label
+      final label = await showDialog<String>(
+        context: context,
+        builder: (context) {
+          String labelText = 'primary';
+          return AlertDialog(
+            title: const Text('Enroll Face'),
+            content: TextField(
+              autofocus: true,
+              decoration: const InputDecoration(
+                labelText: 'Label',
+                hintText: 'e.g., primary, with_glasses',
+              ),
+              onChanged: (value) => labelText = value,
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(context, labelText),
+                child: const Text('Enroll'),
+              ),
+            ],
+          );
+        },
+      );
+
+      if (label != null && label.isNotEmpty) {
+        final result = await _faceApiService.enrollFace(
+          imageFile: file,
+          label: label,
+        );
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Face enrolled successfully! Face ID: ${result['face_id']}'),
+              backgroundColor: Colors.green,
+            ),
+          );
+          // Reload face data
+          await _loadFaceData();
+        }
+      }
+    } on ApiException catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Face enrollment feature coming soon')),
+          SnackBar(
+            content: Text('Error: ${e.message}'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     } finally {
@@ -83,17 +161,48 @@ class _FaceRecognitionPageState extends ConsumerState<FaceRecognitionPage> {
 
     setState(() => _isProcessing = true);
     try {
-      await _cameraController!.takePicture();
-      // TODO: Send image to backend for recognition
+      final imageFile = await _cameraController!.takePicture();
+      final file = File(imageFile.path);
+
+      final result = await _faceApiService.recognizeFace(imageFile: file);
+
+      if (mounted) {
+        if (result['recognized'] == true) {
+          final username = result['username'] ?? 'Unknown';
+          final confidence = result['confidence'] ?? 0.0;
+          
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Recognized: $username (${(confidence * 100).toStringAsFixed(1)}% confidence)'),
+              backgroundColor: Colors.green,
+              duration: const Duration(seconds: 3),
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Face not recognized'),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        }
+      }
+    } on ApiException catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Face recognition feature coming soon')),
+          SnackBar(
+            content: Text('Error: ${e.message}'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     } finally {
@@ -115,11 +224,48 @@ class _FaceRecognitionPageState extends ConsumerState<FaceRecognitionPage> {
                 context: context,
                 builder: (context) => AlertDialog(
                   title: const Text('Enrolled Faces'),
-                  content: Text('You have $_enrolledFaces enrolled faces'),
+                  content: _faces.isEmpty
+                      ? const Text('No faces enrolled yet')
+                      : SizedBox(
+                          width: double.maxFinite,
+                          child: ListView.builder(
+                            shrinkWrap: true,
+                            itemCount: _faces.length,
+                            itemBuilder: (context, index) {
+                              final face = _faces[index];
+                              return ListTile(
+                                leading: const Icon(Icons.face),
+                                title: Text(face['label'] ?? 'Unknown'),
+                                subtitle: Text('Face ID: ${face['face_id']}'),
+                                trailing: IconButton(
+                                  icon: const Icon(Icons.delete, color: Colors.red),
+                                  onPressed: () async {
+                                    try {
+                                      await _faceApiService.deleteFace(face['face_id']);
+                                      if (context.mounted) {
+                                        Navigator.pop(context);
+                                        await _loadFaceData();
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          const SnackBar(content: Text('Face deleted')),
+                                        );
+                                      }
+                                    } catch (e) {
+                                      if (context.mounted) {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(content: Text('Error: $e')),
+                                        );
+                                      }
+                                    }
+                                  },
+                                ),
+                              );
+                            },
+                          ),
+                        ),
                   actions: [
                     TextButton(
                       onPressed: () => Navigator.pop(context),
-                      child: const Text('OK'),
+                      child: const Text('Close'),
                     ),
                   ],
                 ),

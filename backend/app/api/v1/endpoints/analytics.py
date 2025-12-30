@@ -207,9 +207,90 @@ async def get_stats(
     
     # Calculate stats
     categories = {}
+    category_values = {}  # Track values per category for trend calculation
+    
     for entry in entries:
         cat = entry.get("category", "unknown")
         categories[cat] = categories.get(cat, 0) + 1
+        
+        # Track values for trend calculation
+        if cat not in category_values:
+            category_values[cat] = []
+        value = entry.get("value", 0)
+        timestamp = entry.get("timestamp")
+        if timestamp:
+            category_values[cat].append({
+                "value": value,
+                "timestamp": timestamp
+            })
+    
+    # Calculate trends
+    trends = []
+    if entries:
+        # Split entries into two periods (first half vs second half)
+        sorted_entries = sorted(entries, key=lambda x: x.get("timestamp", datetime.min.replace(tzinfo=UTC)))
+        mid_point = len(sorted_entries) // 2
+        
+        if mid_point > 0:
+            first_half = sorted_entries[:mid_point]
+            second_half = sorted_entries[mid_point:]
+            
+            # Calculate average values per category for each period
+            first_period_avg = {}
+            second_period_avg = {}
+            
+            for entry in first_half:
+                cat = entry.get("category", "unknown")
+                value = entry.get("value", 0)
+                if cat not in first_period_avg:
+                    first_period_avg[cat] = {"sum": 0, "count": 0}
+                first_period_avg[cat]["sum"] += value
+                first_period_avg[cat]["count"] += 1
+            
+            for entry in second_half:
+                cat = entry.get("category", "unknown")
+                value = entry.get("value", 0)
+                if cat not in second_period_avg:
+                    second_period_avg[cat] = {"sum": 0, "count": 0}
+                second_period_avg[cat]["sum"] += value
+                second_period_avg[cat]["count"] += 1
+            
+            # Calculate trend direction for each category
+            all_categories = set(list(first_period_avg.keys()) + list(second_period_avg.keys()))
+            
+            for cat in all_categories:
+                first_avg = 0
+                second_avg = 0
+                
+                if cat in first_period_avg and first_period_avg[cat]["count"] > 0:
+                    first_avg = first_period_avg[cat]["sum"] / first_period_avg[cat]["count"]
+                
+                if cat in second_period_avg and second_period_avg[cat]["count"] > 0:
+                    second_avg = second_period_avg[cat]["sum"] / second_period_avg[cat]["count"]
+                
+                # Calculate percentage change
+                if first_avg > 0:
+                    change_percent = ((second_avg - first_avg) / first_avg) * 100
+                elif second_avg > 0:
+                    change_percent = 100  # New category
+                else:
+                    change_percent = 0
+                
+                # Determine trend direction
+                if abs(change_percent) < 5:
+                    direction = "stable"
+                elif change_percent > 0:
+                    direction = "increasing"
+                else:
+                    direction = "decreasing"
+                
+                trends.append({
+                    "category": cat,
+                    "direction": direction,
+                    "change_percent": round(change_percent, 2),
+                    "first_period_avg": round(first_avg, 2),
+                    "second_period_avg": round(second_avg, 2),
+                })
     
     return {
         "total_entries": len(entries),
@@ -218,7 +299,7 @@ async def get_stats(
             "start": start_date or "",
             "end": end_date or "",
         },
-        "trends": [],  # TODO: Calculate trends
+        "trends": trends,
     }
 
 # Time Series
