@@ -68,6 +68,8 @@ class StorageService {
 
   // Biometric preference
   static const String biometricEnabledKey = 'biometric_enabled';
+  static const String fcmTokenKey = 'fcm_token';
+  static const String lastSyncTimeKey = 'last_sync_time';
 
   Future<void> setBiometricEnabled(bool enabled) async {
     await setBool(biometricEnabledKey, enabled);
@@ -75,6 +77,49 @@ class StorageService {
 
   bool? getBiometricEnabled() {
     return getBool(biometricEnabledKey);
+  }
+
+  // FCM Token
+  Future<void> setFCMToken(String token) async {
+    await setString(fcmTokenKey, token);
+  }
+
+  String? getFCMToken() {
+    return getString(fcmTokenKey);
+  }
+
+  // Last sync time
+  Future<void> setLastSyncTime(DateTime time) async {
+    await setString(lastSyncTimeKey, time.toIso8601String());
+  }
+
+  DateTime? getLastSyncTime() {
+    final timeString = getString(lastSyncTimeKey);
+    if (timeString != null) {
+      try {
+        return DateTime.parse(timeString);
+      } catch (e) {
+        return null;
+      }
+    }
+    return null;
+  }
+
+  // Enhanced secure storage methods
+  Future<void> setSecureString(String key, String value) async {
+    await _secureStorage.write(key: key, value: value);
+  }
+
+  Future<String?> getSecureString(String key) async {
+    return await _secureStorage.read(key: key);
+  }
+
+  Future<void> deleteSecureString(String key) async {
+    await _secureStorage.delete(key: key);
+  }
+
+  Future<Map<String, String>> getAllSecureData() async {
+    return await _secureStorage.readAll();
   }
 }
 

@@ -8,6 +8,9 @@ import '../../auth/providers/auth_provider.dart';
 import '../../auth/pages/login_history_page.dart';
 import '../../auth/pages/activity_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../services/export_service.dart';
+import 'privacy_policy_page.dart';
+import 'terms_page.dart';
 
 class SettingsPage extends ConsumerWidget {
   const SettingsPage({super.key});
@@ -65,12 +68,7 @@ class SettingsPage extends ConsumerWidget {
                 leading: const Icon(Icons.download),
                 title: const Text('Export Data'),
                 trailing: const Icon(Icons.chevron_right),
-                onTap: () {
-                  // TODO: Export data
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Export feature coming soon')),
-                  );
-                },
+                onTap: () => _showExportDialog(context),
               ),
               ListTile(
                 leading: const Icon(Icons.delete_outline),
@@ -127,7 +125,12 @@ class SettingsPage extends ConsumerWidget {
                 title: const Text('Privacy Policy'),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () {
-                  // TODO: Show privacy policy
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const PrivacyPolicyPage(),
+                    ),
+                  );
                 },
               ),
               ListTile(
@@ -135,7 +138,12 @@ class SettingsPage extends ConsumerWidget {
                 title: const Text('Terms of Service'),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () {
-                  // TODO: Show terms
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const TermsPage(),
+                    ),
+                  );
                 },
               ),
             ],
@@ -283,6 +291,76 @@ class SettingsPage extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  void _showExportDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Export Data'),
+        content: const Text('Choose export format:'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              await _exportData(context, format: 'json');
+            },
+            child: const Text('JSON (All Data)'),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              await _exportData(context, format: 'csv');
+            },
+            child: const Text('CSV (Analytics Only)'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _exportData(BuildContext context, {required String format}) async {
+    final exportService = ExportService();
+    
+    try {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+
+      if (format == 'json') {
+        await exportService.exportData();
+      } else {
+        await exportService.exportAnalyticsAsCsv();
+      }
+
+      if (context.mounted) {
+        Navigator.pop(context); // Close loading dialog
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Data exported successfully'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        Navigator.pop(context); // Close loading dialog
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Export failed: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 }
 

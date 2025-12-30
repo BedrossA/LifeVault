@@ -47,6 +47,10 @@ class ApiException implements Exception {
     }
   }
 
+  factory ApiException.fromDioException(DioException error) {
+    return ApiException.fromDioError(error);
+  }
+
   @override
   String toString() => message;
 }
