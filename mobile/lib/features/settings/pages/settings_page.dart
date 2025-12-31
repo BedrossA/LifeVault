@@ -1,3 +1,5 @@
+// ignore_for_file: deprecated_member_use, use_build_context_synchronously
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -5,8 +7,6 @@ import '../../../core/providers/theme_provider.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/utils/storage_service.dart';
 import '../../auth/providers/auth_provider.dart';
-import '../../auth/pages/login_history_page.dart';
-import '../../auth/pages/activity_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/export_service.dart';
 import 'privacy_policy_page.dart';
@@ -115,10 +115,10 @@ class SettingsPage extends ConsumerWidget {
           _SettingsSection(
             title: 'About',
             children: [
-              ListTile(
-                leading: const Icon(Icons.info),
-                title: const Text('App Version'),
-                subtitle: const Text('1.0.0'),
+              const ListTile(
+                leading: Icon(Icons.info),
+                title: Text('App Version'),
+                subtitle: Text('1.0.0'),
               ),
               ListTile(
                 leading: const Icon(Icons.privacy_tip),

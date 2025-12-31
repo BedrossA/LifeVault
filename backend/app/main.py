@@ -10,7 +10,7 @@ from app.core.logging import logger
 from app.db.base import init_db
 from app.db.mongodb import connect_mongodb, close_mongodb
 from app.db.redis import connect_redis, close_redis
-from app.api.v1.endpoints import auth, face, analytics
+from app.api.v1.endpoints import auth, face, analytics, intelligence, goal_milestones
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -52,6 +52,8 @@ tags_metadata = [
     {"name": "Authentication", "description": "User authentication and JWT management"},
     {"name": "Face Recognition", "description": "Biometric enrollment and verification"},
     {"name": "Analytics", "description": "Personal data insights and tracking"},
+    {"name": "Intelligence", "description": "AI-powered analytics: correlations, anomalies, patterns, predictions"},
+    {"name": "Goals", "description": "Goal tracking with milestones"},
 ]
 
 # Create FastAPI app
@@ -88,8 +90,18 @@ app.include_router(
     )
 app.include_router(
     analytics.router,
-   prefix=f"{settings.API_V1_PREFIX}/analytics",
+    prefix=f"{settings.API_V1_PREFIX}/analytics",
     tags=["Analytics"]
+)
+app.include_router(
+    intelligence.router,
+    prefix=f"{settings.API_V1_PREFIX}/intelligence",
+    tags=["Intelligence"]
+)
+app.include_router(
+    goal_milestones.router,
+    prefix=f"{settings.API_V1_PREFIX}",
+    tags=["Goals"]
 )
 
 @app.get("/")

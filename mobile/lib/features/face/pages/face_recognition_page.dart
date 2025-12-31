@@ -1,9 +1,10 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:camera/camera.dart';
 import 'dart:io';
 import '../services/face_api_service.dart';
-import '../../../core/services/camera_service.dart';
 import '../../../core/providers/services_provider.dart';
 import '../../../core/network/api_exception.dart';
 
@@ -18,7 +19,6 @@ class FaceRecognitionPage extends ConsumerStatefulWidget {
 class _FaceRecognitionPageState extends ConsumerState<FaceRecognitionPage> {
   final FaceApiService _faceApiService = FaceApiService();
   CameraController? _cameraController;
-  List<CameraDescription>? _cameras;
   bool _isInitialized = false;
   bool _isProcessing = false;
   int _enrolledFaces = 0;

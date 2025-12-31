@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/analytics_models.dart';
-import '../services/analytics_api_service.dart';
 import '../pages/analytics_page.dart';
 
 class AddEntryDialog extends ConsumerStatefulWidget {
@@ -89,7 +88,7 @@ class _AddEntryDialogState extends ConsumerState<AddEntryDialog> {
             mainAxisSize: MainAxisSize.min,
             children: [
               DropdownButtonFormField<String>(
-                value: _selectedCategory,
+                initialValue: _selectedCategory,
                 decoration: const InputDecoration(
                   labelText: 'Category',
                   border: OutlineInputBorder(),

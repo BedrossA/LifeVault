@@ -38,6 +38,7 @@ class _BiometricAuthWidgetState extends ConsumerState<BiometricAuthWidget> {
     final storage = ref.read(storageServiceProvider);
 
     final available = await biometricService.isAvailable();
+    // ignore: await_only_futures
     final biometricsEnabled = await storage.getBiometricEnabled() ?? false;
 
     if (mounted) {

@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends, File, UploadFile, Request, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from typing import List
+import logging
 
 from app.db.base import get_db
 from app.db.mongodb import get_mongo_db
@@ -17,10 +18,12 @@ from app.schemas.face import (
 )
 from app.services.face_service import FaceRecognitionService
 from app.services.face_service_enhanced import EnhancedFaceService
+from app.services.emotion_detection_service import EmotionDetectionService
 from app.core.deps import get_current_active_user
 from app.models.user import User
 from app.models.face import Face
 
+logger = logging.getLogger(__name__)
 router = APIRouter()
 
 # ============================================
@@ -118,6 +121,17 @@ async def recognize_face(
         image=image_array,
         ip_address=ip_address
     )
+    
+    # Add emotion detection
+    try:
+        emotion_result = EmotionDetectionService.detect_emotion_from_image(image_array)
+        result['emotion'] = emotion_result.get('dominant_emotion', 'neutral')
+        result['emotion_confidence'] = emotion_result.get('confidence', 0.0)
+        result['emotions'] = emotion_result.get('emotions', {})
+    except Exception as e:
+        logger.error(f"Error detecting emotion: {e}")
+        result['emotion'] = 'neutral'
+        result['emotion_confidence'] = 0.0
     
     return FaceRecognitionResponse(**result)
 

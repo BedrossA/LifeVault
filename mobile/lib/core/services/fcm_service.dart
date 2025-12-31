@@ -14,7 +14,7 @@ class FCMService {
   /// Initialize FCM service
   Future<void> init() async {
     // Request permission for iOS
-    NotificationSettings settings = await _firebaseMessaging.requestPermission(
+    final NotificationSettings settings = await _firebaseMessaging.requestPermission(
       alert: true,
       announcement: false,
       badge: true,
@@ -48,7 +48,7 @@ class FCMService {
     FirebaseMessaging.onMessageOpenedApp.listen(_handleBackgroundMessage);
 
     // Check if app was opened from a notification
-    RemoteMessage? initialMessage = await _firebaseMessaging.getInitialMessage();
+    final RemoteMessage? initialMessage = await _firebaseMessaging.getInitialMessage();
     if (initialMessage != null) {
       _handleBackgroundMessage(initialMessage);
     }
