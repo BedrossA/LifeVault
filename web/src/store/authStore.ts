@@ -41,6 +41,11 @@ export const useAuthStore = create<AuthState>()(
 
       // --- Primary Actions ---
       login: async (credentials: UserLogin) => {
+        const { isLoading } = get();
+        if (isLoading) {
+          throw new Error('Login already in progress');
+          }
+  
         set({ isLoading: true, error: null });
         try {
           // 1. Get Tokens from login endpoint

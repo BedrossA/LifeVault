@@ -42,7 +42,7 @@ class AuthState {
 class AuthNotifier extends StateNotifier<AuthState> {
   final AuthApiService _authService;
   final StorageService _storage;
-  bool _initialized = false;
+  
   
   AuthNotifier(this._authService, this._storage)
       : super(AuthState(isLoading: true)) {
@@ -79,9 +79,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
         isLoading: false,
         error: e.toString(),
       );
-    } finally {
-      _initialized = true;
-    }
+    } 
   }
 
   Future<bool> login(String username, String password) async {

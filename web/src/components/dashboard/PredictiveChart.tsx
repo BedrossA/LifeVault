@@ -4,11 +4,13 @@
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceLine } from 'recharts';
 import type { ChartDataPoint } from '../../types/analytics';
 
+
 interface PredictiveChartProps {
   historicalData: ChartDataPoint[];
   predictedData?: ChartDataPoint[];
   title?: string;
   color?: string;
+  dataKey?: string;
   predictionColor?: string;
 }
 

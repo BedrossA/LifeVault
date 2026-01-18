@@ -1,7 +1,37 @@
 """Redis caching service"""
 from app.db.redis import get_redis
-from typing import Optional, Any
+from typing import Optional, Any, Callable
+from functools import wraps
 import json
+
+def cache_result(ttl: int = 300, key_prefix: str = ""):
+    """Decorator for caching function results"""
+    def decorator(func: Callable):
+        @wraps(func)
+        async def wrapper(*args, **kwargs):
+            # Generate cache key
+            cache_key = f"{key_prefix}:{func.__name__}:{hash(str(args) + str(kwargs))}"
+            
+            # Try to get from cache
+            redis = await get_redis()
+            cached = await redis.get(cache_key)
+            if cached:
+                return json.loads(cached)
+            
+            # Execute function
+            result = await func(*args, **kwargs)
+            
+            # Cache result
+            await redis.setex(
+                cache_key,
+                ttl,
+                json.dumps(result, default=str)
+            )
+            
+            return result
+        return wrapper
+    return decorator
+
 
 class CacheService:
     @staticmethod

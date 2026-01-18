@@ -85,32 +85,42 @@ class SettingsPage extends ConsumerWidget {
             children: [
               Consumer(
                 builder: (context, ref, _) {
-                  final storage = StorageService();
-                  final biometricEnabled = storage.getBiometricEnabled() ?? false;
-                  return ListTile(
-                    leading: const Icon(Icons.fingerprint),
-                    title: const Text('Biometric Authentication'),
-                    subtitle: const Text('Use fingerprint or face ID'),
-                    trailing: Switch(
-                      value: biometricEnabled,
-                      onChanged: (value) async {
-                        await storage.setBiometricEnabled(value);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              value
-                                  ? 'Biometric authentication enabled'
-                                  : 'Biometric authentication disabled',
-                            ),
+                  return FutureBuilder<bool>(
+                    future: StorageService().getBool(StorageService.biometricEnabledKey) != null
+                        ? Future.value(StorageService().getBool(StorageService.biometricEnabledKey) ?? false)
+                        : Future.value(false),
+                    builder: (context, snapshot) {
+                      final biometricEnabled = snapshot.data ?? false;
+
+                      return ListTile(
+                        leading: const Icon(Icons.fingerprint),
+                        title: const Text('Biometric Authentication'),
+                        subtitle: const Text('Use fingerprint or face ID'),
+                        trailing: Switch(
+                          value: biometricEnabled,
+                          onChanged: snapshot.hasData ? (value) async {
+                            final storage = StorageService();
+                            await storage.setBiometricEnabled(value);
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    value 
+                                      ? 'Biometric authentication enabled' 
+                                      : 'Biometric authentication disabled',
+                                    ),
+                                  ),
+                                );
+                              }
+                            } : null,
                           ),
                         );
                       },
-                    ),
-                  );
-                },
-              ),
-            ],
-          ),
+                    );//FutureBuilder
+                  },
+                ),
+              ], 
+           ),
           // About Section
           _SettingsSection(
             title: 'About',

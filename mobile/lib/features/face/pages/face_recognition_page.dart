@@ -54,12 +54,17 @@ class _FaceRecognitionPageState extends ConsumerState<FaceRecognitionPage> {
   }
 
   Future<void> _loadFaceData() async {
-    try {
-      final faces = await _faceApiService.getMyFaces();
-      if (mounted) {
-        setState(() {
-          _faces = faces;
-          _enrolledFaces = faces.length;
+  if (!mounted) return;
+  
+  setState(() => _isProcessing = true);
+  
+  try {
+    final faces = await _faceApiService.getMyFaces();
+    if (mounted) {
+      setState(() {
+        _faces = faces;
+        _enrolledFaces = faces.length;
+        _isProcessing = false;
         });
       }
     } catch (e) {
@@ -68,10 +73,24 @@ class _FaceRecognitionPageState extends ConsumerState<FaceRecognitionPage> {
         setState(() {
           _enrolledFaces = 0;
           _faces = [];
+          _isProcessing = false;
         });
+      
+      // Show error only if it's not an auth issue
+      if (e is! ApiException || (e.statusCode != 401 && e.statusCode != 403)) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to load face data: ${e.toString()}'),
+            action: SnackBarAction(
+              label: 'Retry',
+              onPressed: _loadFaceData,
+            ),
+          ),
+        );
       }
     }
   }
+}
 
   @override
   void dispose() {

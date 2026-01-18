@@ -94,7 +94,8 @@ async def update_milestone_progress(
     milestone_id: int,
     current_value: float,
     current_user: User = Depends(get_current_active_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    mongo_db = Depends(get_mongo_db)
 ):
     """Update milestone progress"""
     milestone = db.query(GoalMilestone).filter(
@@ -104,8 +105,7 @@ async def update_milestone_progress(
     if not milestone:
         raise HTTPException(status_code=404, detail="Milestone not found")
     
-    # Verify goal belongs to user
-    mongo_db = Depends(get_mongo_db)
+    # Verify goal belongs to use
     goal = await mongo_db.goals.find_one({
         "id": milestone.goal_id,
         "user_id": current_user.id
@@ -131,7 +131,8 @@ async def update_milestone_progress(
 async def achieve_milestone(
     milestone_id: int,
     current_user: User = Depends(get_current_active_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    mongo_db = Depends(get_mongo_db)
 ):
     """Mark a milestone as achieved"""
     milestone = db.query(GoalMilestone).filter(
@@ -142,7 +143,6 @@ async def achieve_milestone(
         raise HTTPException(status_code=404, detail="Milestone not found")
     
     # Verify goal belongs to user
-    mongo_db = Depends(get_mongo_db)
     goal = await mongo_db.goals.find_one({
         "id": milestone.goal_id,
         "user_id": current_user.id
@@ -164,7 +164,8 @@ async def achieve_milestone(
 async def delete_milestone(
     milestone_id: int,
     current_user: User = Depends(get_current_active_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    mongo_db = Depends(get_mongo_db)
 ):
     """Delete a milestone"""
     milestone = db.query(GoalMilestone).filter(
@@ -175,7 +176,6 @@ async def delete_milestone(
         raise HTTPException(status_code=404, detail="Milestone not found")
     
     # Verify goal belongs to user
-    mongo_db = Depends(get_mongo_db)
     goal = await mongo_db.goals.find_one({
         "id": milestone.goal_id,
         "user_id": current_user.id
