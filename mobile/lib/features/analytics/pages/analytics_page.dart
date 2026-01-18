@@ -17,7 +17,8 @@ class AnalyticsPage extends ConsumerStatefulWidget {
 }
 
 class _AnalyticsPageState extends ConsumerState<AnalyticsPage>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, AutomaticKeepAliveClientMixin {
+
   late TabController _tabController;
   List<AnalyticsEntry> _entries = [];
   AnalyticsStats? _stats;
@@ -26,10 +27,42 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage>
   String _selectedMetric = 'steps';
 
   @override
+  bool get wantKeepAlive => true;
+
+  @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
     _loadData();
+  // Listen to tab changes to load data on demand
+    _tabController.addListener(() {
+      if (!_tabController.indexIsChanging) {
+        _onTabChanged(_tabController.index);
+      }
+    });
+  }
+  
+  void _onTabChanged(int index) {
+    // Optionally refresh data for specific tabs
+    if (index == 0 && _timeSeries == null) {
+      _loadChartData();
+    }
+  }
+
+  Future<void> _loadChartData() async {
+    try {
+      final service = ref.read(analyticsServiceProvider);
+      final timeSeries = await service.getTimeSeries(metric: _selectedMetric);
+      setState(() {
+        _timeSeries = timeSeries;
+      });
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error loading chart data: $e')),
+        );
+      }
+    }
   }
 
   @override
@@ -64,6 +97,7 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage>
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     return Scaffold(
       appBar: AppBar(
         title: const Text('Analytics'),

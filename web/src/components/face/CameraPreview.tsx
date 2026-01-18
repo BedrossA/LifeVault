@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState } from 'react';
+import { useRef, useEffect, useState, useCallback } from 'react';
 
 interface CameraPreviewProps {
   onCapture: (blob: Blob) => void;
@@ -21,93 +21,46 @@ export function CameraPreview({
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => {
-    if (!isActive) {
-      stopCamera();
-      return;
+  // Cleanup function to stop camera properly
+  const stopCamera = useCallback(() => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => {
+        track.stop();
+        track.enabled = false;
+      });
+      streamRef.current = null;
     }
 
-    startCamera();
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+      videoRef.current.load(); // Reset video element
+    }
+  }, []);
 
-    return () => {
-      stopCamera();
-    };
-  }, [isActive, facingMode]);
-
-  const startCamera = async () => {
+  const startCamera = useCallback(async () => {
     try {
       setIsLoading(true);
       setError(null);
 
-      // Check if we're in a secure context
-      // getUserMedia requires HTTPS (or localhost/127.0.0.1 for development)
-      // Modern browsers expose isSecureContext which handles this automatically
-      const isLocalNetwork = /^192\.168\.|^10\.|^172\.(1[6-9]|2[0-9]|3[01])\./.test(location.hostname);
+      // Check browser support
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        throw new Error(
+          'Camera access is not supported in this browser. Please use a modern browser or upload images instead.'
+        );
+      }
+
+      // Check secure context
+      const isLocalNetwork = /^192\.168\.|^10\.|^172\.(1[6-9]|2[0-9]|3[01])\./.test(
+        location.hostname
+      );
       const isLocalhost = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
-      
+
       if (!window.isSecureContext) {
         if (!isLocalhost && !isLocalNetwork) {
           throw new Error(
             'Camera access requires a secure connection (HTTPS). Please use HTTPS or upload images instead.'
           );
         }
-        
-        // Warn about HTTPS for local network access
-        if (isLocalNetwork && location.protocol !== 'https:') {
-          console.warn(
-            '⚠️ Security Warning: For secure camera access on local network (192.168.x.x), ' +
-            'please use HTTPS. Current connection is not secure.'
-          );
-          // Show a non-blocking warning to user
-          setTimeout(() => {
-            const warning = document.createElement('div');
-            warning.className = 'fixed bottom-4 right-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 text-yellow-800 dark:text-yellow-300 px-4 py-3 rounded-lg shadow-lg z-50 max-w-sm';
-            warning.innerHTML = `
-              <p class="font-medium mb-1">Security Notice</p>
-              <p class="text-sm">For secure access, use HTTPS on local network (192.168.x.x)</p>
-              <button onclick="this.parentElement.remove()" class="mt-2 text-xs underline">Dismiss</button>
-            `;
-            document.body.appendChild(warning);
-            setTimeout(() => warning.remove(), 10000);
-          }, 1000);
-        }
-      }
-
-      // Check if getUserMedia is available
-      let getUserMediaFn: ((constraints: MediaStreamConstraints) => Promise<MediaStream>) | null = null;
-
-      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-        // Modern API
-        getUserMediaFn = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
-      } else {
-        // Fallback for older browsers
-        const legacyGetUserMedia =
-          navigator.getUserMedia ||
-          (navigator as any).webkitGetUserMedia ||
-          (navigator as any).mozGetUserMedia ||
-          (navigator as any).msGetUserMedia;
-
-        if (!legacyGetUserMedia) {
-          throw new Error(
-            'Camera access is not supported in this browser. Please use a modern browser or upload images instead.'
-          );
-        }
-
-        // Wrap legacy API in Promise
-        getUserMediaFn = (constraints: MediaStreamConstraints) => {
-          return new Promise((resolve, reject) => {
-            legacyGetUserMedia.call(
-              navigator,
-              constraints,
-              (stream: MediaStream) => resolve(stream),
-              (err: any) => reject(err)
-            );
-          });
-        };
-      }
-
-      if (!getUserMediaFn) {
-        throw new Error('Camera access is not available.');
       }
 
       const constraints: MediaStreamConstraints = {
@@ -119,21 +72,44 @@ export function CameraPreview({
         audio: false,
       };
 
-      const stream = await getUserMediaFn(constraints);
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+
+      // Check if component is still mounted and active
+      if (!isActive) {
+        stream.getTracks().forEach((track) => track.stop());
+        return;
+      }
+
       streamRef.current = stream;
 
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
+        
+        // Wait for video to be ready
+        await new Promise<void>((resolve, reject) => {
+          if (!videoRef.current) {
+            reject(new Error('Video element not found'));
+            return;
+          }
+
+          videoRef.current.onloadedmetadata = () => {
+            resolve();
+          };
+
+          videoRef.current.onerror = () => {
+            reject(new Error('Video loading error'));
+          };
+        });
+
         await videoRef.current.play();
       }
     } catch (err: any) {
       let errorMessage = 'Failed to access camera.';
-      
+
       if (err instanceof Error) {
         const errName = err.name || '';
         const errMsg = err.message || '';
 
-        // Handle specific error types
         if (errName === 'NotAllowedError' || errMsg.includes('permission') || errMsg.includes('denied')) {
           errorMessage = 'Camera permission denied. Please allow camera access in your browser settings and try again.';
         } else if (errName === 'NotFoundError' || errMsg.includes('not found')) {
@@ -141,10 +117,18 @@ export function CameraPreview({
         } else if (errName === 'NotReadableError' || errMsg.includes('not readable')) {
           errorMessage = 'Camera is already in use by another application. Please close other apps using the camera.';
         } else if (errName === 'OverconstrainedError' || errMsg.includes('constraint')) {
-          errorMessage = 'Camera does not support the requested settings. Trying with default settings...';
-          // Retry with simpler constraints
+          // Try with simpler constraints
           try {
-            const simpleStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+            const simpleStream = await navigator.mediaDevices.getUserMedia({
+              video: true,
+              audio: false,
+            });
+
+            if (!isActive) {
+              simpleStream.getTracks().forEach((track) => track.stop());
+              return;
+            }
+
             streamRef.current = simpleStream;
             if (videoRef.current) {
               videoRef.current.srcObject = simpleStream;
@@ -162,23 +146,35 @@ export function CameraPreview({
 
       setError(errorMessage);
       console.error('Camera error:', err);
+      stopCamera(); // Cleanup on error
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [isActive, width, height, facingMode, stopCamera]);
 
-  const stopCamera = () => {
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach((track) => track.stop());
-      streamRef.current = null;
+  useEffect(() => {
+    let mounted = true;
+
+    if (!isActive) {
+      stopCamera();
+      return;
     }
 
-    if (videoRef.current) {
-      videoRef.current.srcObject = null;
-    }
-  };
+    const initCamera = async () => {
+      if (mounted && isActive) {
+        await startCamera();
+      }
+    };
 
-  const capturePhoto = () => {
+    initCamera();
+
+    return () => {
+      mounted = false;
+      stopCamera();
+    };
+  }, [isActive, startCamera, stopCamera]);
+
+  const capturePhoto = useCallback(() => {
     if (!videoRef.current || !canvasRef.current) return;
 
     const video = videoRef.current;
@@ -204,22 +200,22 @@ export function CameraPreview({
       'image/jpeg',
       0.95
     );
-  };
+  }, [onCapture]);
 
   if (!isActive) {
     return (
-      <div className="bg-gray-100 rounded-lg flex items-center justify-center aspect-video">
-        <p className="text-gray-500">Camera inactive</p>
+      <div className="bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center aspect-video">
+        <p className="text-gray-500 dark:text-gray-400">Camera inactive</p>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="bg-red-50 border border-red-200 rounded-lg p-4 aspect-video flex items-center justify-center">
+      <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 aspect-video flex items-center justify-center">
         <div className="text-center px-2">
-          <p className="text-red-700 font-medium text-sm sm:text-base">Camera Error</p>
-          <p className="text-red-600 text-xs sm:text-sm mt-1 break-words">{error}</p>
+          <p className="text-red-700 dark:text-red-400 font-medium text-sm sm:text-base">Camera Error</p>
+          <p className="text-red-600 dark:text-red-400 text-xs sm:text-sm mt-1 break-words">{error}</p>
           <button
             onClick={startCamera}
             className="mt-3 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 text-xs sm:text-sm"
@@ -251,6 +247,7 @@ export function CameraPreview({
           onClick={capturePhoto}
           disabled={isLoading}
           className="px-6 py-3 bg-primary-600 text-white rounded-full hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
+          aria-label="Capture photo"
         >
           📷 Capture
         </button>
@@ -258,4 +255,3 @@ export function CameraPreview({
     </div>
   );
 }
-

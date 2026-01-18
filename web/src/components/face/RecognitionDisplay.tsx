@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { CameraPreview } from './CameraPreview';
 import { faceApi } from '../../services/faceApi';
 import type { FaceRecognitionResponse } from '../../types/face';
@@ -16,8 +16,21 @@ export function RecognitionDisplay({ mode = 'single' }: RecognitionDisplayProps)
   const [imageDimensions, setImageDimensions] = useState<{ width: number; height: number } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
+  const mountedRef = useRef(true);
 
-  // Cleanup image URL on unmount
+  // Cleanup image URL on unmount and when image changes
+  useEffect(() => {
+    mountedRef.current = true;
+
+    return () => {
+      mountedRef.current = false;
+      if (imageUrl) {
+        URL.revokeObjectURL(imageUrl);
+      }
+    };
+  }, []);
+
+  // Cleanup previous image URL when it changes
   useEffect(() => {
     return () => {
       if (imageUrl) {
@@ -26,13 +39,34 @@ export function RecognitionDisplay({ mode = 'single' }: RecognitionDisplayProps)
     };
   }, [imageUrl]);
 
-  const handleRecognize = async (imageBlob: Blob) => {
+  const cleanupImageUrl = useCallback(() => {
+    if (imageUrl) {
+      URL.revokeObjectURL(imageUrl);
+      setImageUrl(null);
+    }
+  }, [imageUrl]);
+
+  const handleRecognize = useCallback(async (imageBlob: Blob) => {
+    // Prevent multiple simultaneous recognitions
+    if (isRecognizing) {
+      return;
+    }
+
     setIsRecognizing(true);
     setError(null);
     setResult(null);
 
-    // Create preview URL
+    // Cleanup previous image URL
+    cleanupImageUrl();
+
+    // Create new preview URL
     const url = URL.createObjectURL(imageBlob);
+    
+    if (!mountedRef.current) {
+      URL.revokeObjectURL(url);
+      return;
+    }
+
     setImageUrl(url);
 
     try {
@@ -46,31 +80,55 @@ export function RecognitionDisplay({ mode = 'single' }: RecognitionDisplayProps)
           ? await faceApi.recognizeMultipleFaces(imageFile)
           : await faceApi.recognizeFace(imageFile);
 
-      setResult(response);
+      if (mountedRef.current) {
+        setResult(response);
+      }
     } catch (err: any) {
       const errorMessage =
         err.response?.data?.detail || err.message || 'Recognition failed';
-      setError(errorMessage);
-      // Clean up preview URL on error
-      if (url) URL.revokeObjectURL(url);
-      setImageUrl(null);
+      
+      if (mountedRef.current) {
+        setError(errorMessage);
+        // Clean up preview URL on error
+        URL.revokeObjectURL(url);
+        setImageUrl(null);
+      }
     } finally {
-      setIsRecognizing(false);
+      if (mountedRef.current) {
+        setIsRecognizing(false);
+      }
     }
-  };
+  }, [isRecognizing, mode, cleanupImageUrl]);
 
-  const handleCapture = (blob: Blob) => {
+  const handleCapture = useCallback((blob: Blob) => {
     handleRecognize(blob);
     setIsCapturing(false);
-  };
+  }, [handleRecognize]);
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       handleRecognize(file);
     }
-  };
+  }, [handleRecognize]);
 
+  const handleReset = useCallback(() => {
+    setResult(null);
+    setError(null);
+    cleanupImageUrl();
+    setImageDimensions(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  }, [cleanupImageUrl]);
+
+  const handleImageLoad = useCallback((e: React.SyntheticEvent<HTMLImageElement>) => {
+    const img = e.currentTarget;
+    setImageDimensions({
+      width: img.naturalWidth || img.width,
+      height: img.naturalHeight || img.height,
+    });
+  }, []);
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 sm:p-6">
@@ -83,6 +141,7 @@ export function RecognitionDisplay({ mode = 'single' }: RecognitionDisplayProps)
             onClick={() => setIsCapturing(!isCapturing)}
             className={`btn ${isCapturing ? 'btn-secondary' : 'btn-outline'} flex-1 sm:flex-none`}
             disabled={isRecognizing}
+            aria-label={isCapturing ? 'Stop camera' : 'Use camera'}
           >
             {isCapturing ? 'Stop Camera' : 'Use Camera'}
           </button>
@@ -90,9 +149,20 @@ export function RecognitionDisplay({ mode = 'single' }: RecognitionDisplayProps)
             onClick={() => fileInputRef.current?.click()}
             className="btn btn-outline flex-1 sm:flex-none"
             disabled={isRecognizing}
+            aria-label="Upload image"
           >
             Upload Image
           </button>
+          {(result || imageUrl || error) && (
+            <button
+              onClick={handleReset}
+              className="btn btn-secondary flex-1 sm:flex-none"
+              disabled={isRecognizing}
+              aria-label="Reset"
+            >
+              Reset
+            </button>
+          )}
         </div>
         <input
           ref={fileInputRef}
@@ -100,6 +170,7 @@ export function RecognitionDisplay({ mode = 'single' }: RecognitionDisplayProps)
           accept="image/jpeg,image/png,image/jpg"
           onChange={handleFileSelect}
           className="hidden"
+          aria-label="File input"
         />
       </div>
 
@@ -110,7 +181,8 @@ export function RecognitionDisplay({ mode = 'single' }: RecognitionDisplayProps)
       )}
 
       {isRecognizing && (
-        <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-400 rounded">
+        <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-400 rounded flex items-center">
+          <div className="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-blue-700 dark:border-blue-400 mr-2" />
           Recognizing faces...
         </div>
       )}
@@ -137,56 +209,18 @@ export function RecognitionDisplay({ mode = 'single' }: RecognitionDisplayProps)
               src={imageUrl}
               alt="Recognition result"
               className="w-full h-auto"
-              onLoad={(e) => {
-                const img = e.target as HTMLImageElement;
-                setImageDimensions({
-                  width: img.naturalWidth || img.width,
-                  height: img.naturalHeight || img.height,
-                });
-              }}
+              onLoad={handleImageLoad}
             />
-            {/* Face boxes overlay - positioned absolutely over the image */}
-            {result.faces.length > 0 && (
+            {/* Face boxes overlay */}
+            {result.faces.length > 0 && imageDimensions && (
               <div className="absolute inset-0 pointer-events-none">
                 {result.faces.map((face, index) => {
                   const { bbox } = face;
                   const img = imageRef.current;
-                  
-                  if (!img || !imageDimensions) {
-                    // Fallback: use pixel values directly (may not align perfectly if image is scaled)
-                    const width = bbox.right - bbox.left;
-                    const height = bbox.bottom - bbox.top;
-                    return (
-                      <div
-                        key={index}
-                        className={`absolute border-2 ${
-                          face.is_known
-                            ? 'border-green-500 bg-green-500/20'
-                            : 'border-yellow-500 bg-yellow-500/20'
-                        }`}
-                        style={{
-                          left: `${bbox.left}px`,
-                          top: `${bbox.top}px`,
-                          width: `${width}px`,
-                          height: `${height}px`,
-                        }}
-                      >
-                        <div
-                          className={`absolute -top-8 left-0 px-2 py-1 rounded text-xs font-medium whitespace-nowrap ${
-                            face.is_known
-                              ? 'bg-green-500 text-white'
-                              : 'bg-yellow-500 text-white'
-                          }`}
-                        >
-                          {face.is_known
-                            ? `${face.username || 'Known'} (${(face.confidence * 100).toFixed(1)}%)`
-                            : `Unknown (${(face.confidence * 100).toFixed(1)}%)`}
-                        </div>
-                      </div>
-                    );
-                  }
 
-                  // Calculate scale factors based on natural vs displayed size
+                  if (!img) return null;
+
+                  // Calculate scale factors
                   const naturalWidth = imageDimensions.width;
                   const naturalHeight = imageDimensions.height;
                   const displayedWidth = img.clientWidth || img.offsetWidth || naturalWidth;
@@ -195,12 +229,12 @@ export function RecognitionDisplay({ mode = 'single' }: RecognitionDisplayProps)
                   const scaleX = displayedWidth / naturalWidth;
                   const scaleY = displayedHeight / naturalHeight;
 
-                  // Scale bbox coordinates to match displayed image size
+                  // Scale bbox coordinates
                   const scaledLeft = bbox.left * scaleX;
                   const scaledTop = bbox.top * scaleY;
                   const scaledWidth = (bbox.right - bbox.left) * scaleX;
                   const scaledHeight = (bbox.bottom - bbox.top) * scaleY;
-                  
+
                   return (
                     <div
                       key={index}
@@ -234,11 +268,14 @@ export function RecognitionDisplay({ mode = 'single' }: RecognitionDisplayProps)
             )}
           </div>
 
+          {/* Statistics */}
           <div className="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
               <div>
                 <p className="text-sm text-gray-600 dark:text-gray-400">Faces Detected</p>
-                <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{result.num_faces_detected}</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                  {result.num_faces_detected}
+                </p>
               </div>
               <div>
                 <p className="text-sm text-gray-600 dark:text-gray-400">Recognized</p>
@@ -278,9 +315,7 @@ export function RecognitionDisplay({ mode = 'single' }: RecognitionDisplayProps)
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="font-medium text-gray-900 dark:text-gray-100">
-                        {face.is_known
-                          ? `Known: ${face.username || 'User'}`
-                          : 'Unknown Face'}
+                        {face.is_known ? `Known: ${face.username || 'User'}` : 'Unknown Face'}
                       </p>
                       <p className="text-sm text-gray-600 dark:text-gray-400">
                         Confidence: {(face.confidence * 100).toFixed(1)}% | Quality:{' '}
@@ -300,25 +335,13 @@ export function RecognitionDisplay({ mode = 'single' }: RecognitionDisplayProps)
         </div>
       )}
 
-      {!isCapturing && !result && !imageUrl && (
+      {!isCapturing && !result && !imageUrl && !error && (
         <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-8 text-center">
           <p className="text-gray-500 dark:text-gray-400">
             Use camera or upload an image to recognize faces
           </p>
         </div>
       )}
-
-      {/* Clean up image URL when component unmounts or image changes */}
-      {imageUrl && !result && (
-        <div className="relative bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden">
-          <img
-            src={imageUrl}
-            alt="Uploaded image"
-            className="w-full h-auto"
-          />
-        </div>
-      )}
     </div>
   );
 }
-

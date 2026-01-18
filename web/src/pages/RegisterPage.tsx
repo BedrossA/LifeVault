@@ -4,6 +4,8 @@
 import { useState, FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
+import { validateEmail, validateUsername, validatePassword, validateFullName } from '../utils/validation';
+
 
 export function RegisterPage() {
   const [email, setEmail] = useState('');
@@ -19,6 +21,33 @@ export function RegisterPage() {
     e.preventDefault();
     setError(null);
 
+    // Validate all inputs
+    const emailValidation = validateEmail(email);
+    if (!emailValidation.isValid) {
+      setError(emailValidation.error!);
+      return;
+    }
+  
+    const usernameValidation = validateUsername(username);
+    if (!usernameValidation.isValid) {
+      setError(usernameValidation.error!);
+      return;
+    }
+  
+    const passwordValidation = validatePassword(password);
+    if (!passwordValidation.isValid) {
+      setError(passwordValidation.error!);
+      return;
+    }
+  
+    if (fullName) {
+      const nameValidation = validateFullName(fullName);
+      if (!nameValidation.isValid) {
+        setError(nameValidation.error!);
+        return;
+      }
+    }
+  
     try {
       await register({
         email,

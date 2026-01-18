@@ -1,6 +1,9 @@
 import 'package:workmanager/workmanager.dart';
 import 'package:flutter/foundation.dart';
 import 'offline_storage_service.dart';
+import '../network/api_client.dart';
+import '../../features/analytics/services/analytics_api_service.dart';
+import '../../features/analytics/models/analytics_models.dart';
 
 /// Background sync service using WorkManager
 class BackgroundSyncService {
@@ -10,6 +13,7 @@ class BackgroundSyncService {
 
   static const String _syncTaskName = 'backgroundSync';
   final OfflineStorageService _offlineStorage = OfflineStorageService();
+  final AnalyticsApiService _analyticsService = AnalyticsApiService();
 
   bool _initialized = false;
 
@@ -81,6 +85,9 @@ class BackgroundSyncService {
     try {
       debugPrint('Starting background sync...');
       
+      // Initialize API client if needed
+      await ApiClient().init();
+
       final syncQueue = await _offlineStorage.getSyncQueue();
       if (syncQueue.isEmpty) {
         debugPrint('Sync queue is empty');
@@ -93,6 +100,7 @@ class BackgroundSyncService {
       for (var item in syncQueue) {
         final id = item['id'] as String;
         final action = item['action'] as String;
+        final data = item['data'] as Map<String, dynamic>;
         final retryCount = item['retryCount'] as int? ?? 0;
 
         // Skip if retry count is too high
@@ -107,8 +115,16 @@ class BackgroundSyncService {
           bool success = false;
           switch (action) {
             case 'create_analytics_entry':
-              // You'll need to inject the service here
-              // For now, we'll just mark as processed
+              // Properly create the entry
+              final entry = AnalyticsEntryCreate(
+                category: data['category'] as String,
+                metric: data['metric'] as String,
+                value: (data['value'] as num).toDouble(),
+                unit: data['unit'] as String?,
+                notes: data['notes'] as String?,
+                metadata: data['metadata'] as Map<String, dynamic>?,
+              );
+              await _analyticsService.createEntry(entry);
               success = true;
               break;
             case 'update_analytics_entry':
@@ -117,9 +133,11 @@ class BackgroundSyncService {
             case 'delete_analytics_entry':
               success = true;
               break;
+            
             default:
               debugPrint('Unknown action: $action');
-              success = false;
+              await _offlineStorage.removeFromSyncQueue(id);
+              continue;
           }
 
           if (success) {
@@ -138,6 +156,7 @@ class BackgroundSyncService {
       debugPrint('Background sync completed');
     } catch (e) {
       debugPrint('Error in background sync: $e');
+      rethrow;
     }
   }
 }

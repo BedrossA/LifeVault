@@ -5,6 +5,16 @@ from pathlib import Path
 
 class Settings(BaseSettings):
     """Application settings loaded from environment variables"""
+
+    ENVIRONMENT: str = "development"  # development, staging, production
+    
+    @property
+    def is_production(self) -> bool:
+        return self.ENVIRONMENT == "production"
+    
+    @property
+    def debug_enabled(self) -> bool:
+        return self.ENVIRONMENT != "production"
     
     # Application
     APP_NAME: str = "LifeVault"

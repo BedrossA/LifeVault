@@ -1,8 +1,31 @@
 """Analytics schemas for API validation"""
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, Field, ConfigDict, field_validator, ValidationInfo
 from typing import Optional, List
 from datetime import date, datetime
+import math
 
+class AnalyticsEntryCreate(BaseModel):
+    category: str = Field(..., min_length=1, max_length=50)
+    metric: str = Field(..., min_length=1, max_length=50)
+    value: float
+    unit: Optional[str] = Field(None, max_length=20)
+    notes: Optional[str] = Field(None, max_length=500)
+
+    @field_validator('value')
+    @classmethod
+    def validate_value(cls, v: float) -> float:
+        # Pydantic V2 has built-in finite checks, but for custom logic:
+        if not math.isfinite(v):
+            raise ValueError('Value must be a finite number')
+        return v
+
+    @field_validator('category')
+    @classmethod
+    def validate_category(cls, v: str) -> str:
+        allowed = {'health', 'fitness', 'productivity', 'mood', 'finance', 'other'}
+        if v not in allowed:
+            raise ValueError(f'Category must be one of {sorted(allowed)}')
+        return v
 # Sleep Schemas
 class SleepLogCreate(BaseModel):
     date: date

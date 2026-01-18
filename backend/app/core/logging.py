@@ -4,6 +4,39 @@ import logging.handlers
 import sys
 from pathlib import Path
 from app.core.config import settings
+import json
+from datetime import datetime
+from typing import Optional
+
+class StructuredLogger:
+    """Structured JSON logging for better log analysis"""
+    
+    @staticmethod
+    def log_api_call(
+        endpoint: str,
+        method: str,
+        user_id: Optional[int],
+        status_code: int,
+        duration_ms: float,
+        error: Optional[str] = None
+    ):
+        """Log API call with structured data"""
+        log_data = {
+            "timestamp": datetime.utcnow().isoformat(),
+            "type": "api_call",
+            "endpoint": endpoint,
+            "method": method,
+            "user_id": user_id,
+            "status_code": status_code,
+            "duration_ms": duration_ms,
+            "error": error
+        }
+        
+        logger = logging.getLogger("api")
+        if error:
+            logger.error(json.dumps(log_data))
+        else:
+            logger.info(json.dumps(log_data))
 
 def setup_logging():
     """Configure application logging"""

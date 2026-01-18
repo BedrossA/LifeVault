@@ -105,8 +105,7 @@ async def update_milestone_progress(
         raise HTTPException(status_code=404, detail="Milestone not found")
     
     # Verify goal belongs to user
-    from app.db.mongodb import get_mongo_db
-    mongo_db = await get_mongo_db()
+    mongo_db = Depends(get_mongo_db)
     goal = await mongo_db.goals.find_one({
         "id": milestone.goal_id,
         "user_id": current_user.id
@@ -143,8 +142,7 @@ async def achieve_milestone(
         raise HTTPException(status_code=404, detail="Milestone not found")
     
     # Verify goal belongs to user
-    from app.db.mongodb import get_mongo_db
-    mongo_db = await get_mongo_db()
+    mongo_db = Depends(get_mongo_db)
     goal = await mongo_db.goals.find_one({
         "id": milestone.goal_id,
         "user_id": current_user.id
@@ -177,8 +175,7 @@ async def delete_milestone(
         raise HTTPException(status_code=404, detail="Milestone not found")
     
     # Verify goal belongs to user
-    from app.db.mongodb import get_mongo_db
-    mongo_db = await get_mongo_db()
+    mongo_db = Depends(get_mongo_db)
     goal = await mongo_db.goals.find_one({
         "id": milestone.goal_id,
         "user_id": current_user.id

@@ -4,22 +4,31 @@ from jose import JWTError, jwt
 from datetime import datetime, timedelta, UTC
 from typing import Optional, Dict, Any
 from app.core.config import settings
+from app.core.logging import logger
 import secrets
 import hashlib
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """Verify password against hash"""
-    # SHA256 pre-hash to ensure it fits in 72 bytes
-    prehashed = hashlib.sha256(plain_password.encode('utf-8')).digest()  # Use digest, not hexdigest
-    return bcrypt.checkpw(prehashed, hashed_password.encode('utf-8'))
+    try:
+        # Convert password to bytes for bcrypt
+        password_bytes = plain_password.encode('utf-8')
+        hashed_bytes = hashed_password.encode('utf-8')
+        return bcrypt.checkpw(password_bytes, hashed_bytes)
+    except Exception as e:
+        logger.error(f"Password verification error: {e}")
+        return False
 
 def get_password_hash(password: str) -> str:
     """Hash password using bcrypt"""
-    # SHA256 pre-hash to ensure it fits in 72 bytes
-    prehashed = hashlib.sha256(password.encode('utf-8')).digest()  # Use digest, not hexdigest
-    salt = bcrypt.gensalt()
-    hashed = bcrypt.hashpw(prehashed, salt)
-    return hashed.decode('utf-8')
+    try:
+        password_bytes = password.encode('utf-8')
+        salt = bcrypt.gensalt(rounds=12)  # Increase rounds for better security
+        hashed = bcrypt.hashpw(password_bytes, salt)
+        return hashed.decode('utf-8')
+    except Exception as e:
+        logger.error(f"Password hashing error: {e}")
+        raise
 
 def create_access_token(data: Dict[str, Any], expires_delta: Optional[timedelta] = None) -> str:
     """Create JWT access token"""

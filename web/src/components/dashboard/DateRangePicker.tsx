@@ -2,7 +2,7 @@
  * Date Range Picker Component
  */
 import { useState } from 'react';
-import { format, subDays, subMonths, subWeeks } from 'date-fns';
+import { format, subDays } from 'date-fns';
 import type { DateRange } from '../../types/analytics';
 
 interface DateRangePickerProps {

@@ -29,7 +29,7 @@ class ApiClient {
 
     // Add interceptors
     _dio.interceptors.add(
-      InterceptorsWrapper(
+      QueuedInterceptorsWrapper(
         onRequest: (options, handler) async {
           // Add auth token if available
           final token = await _storage.getAccessToken();
@@ -45,15 +45,41 @@ class ApiClient {
             final refreshed = await _refreshToken();
             if (refreshed) {
               // Retry the request
-              final opts = error.requestOptions;
-              final token = await _storage.getAccessToken();
-              opts.headers['Authorization'] = 'Bearer $token';
-              final response = await _dio.fetch(opts);
-              return handler.resolve(response);
+              try {
+                final opts = error.requestOptions;
+                final token = await _storage.getAccessToken();
+                opts.headers['Authorization'] = 'Bearer $token';
+                final response = await _dio.fetch(opts);
+                return handler.resolve(response);
+              } catch (e) {
+                return handler.reject(error);
+              }
             } else {
-              // Refresh failed, clear tokens and redirect to login
+              // Refresh failed, clear tokens
               await _storage.clearTokens();
               return handler.reject(error);
+            }
+          }
+          
+          // Retry on network errors (max 3 times)
+          if (error.type == DioExceptionType.connectionTimeout ||
+              error.type == DioExceptionType.receiveTimeout ||
+              error.type == DioExceptionType.connectionError) {
+            
+            final retryCount = error.requestOptions.extra['retryCount'] as int? ?? 0;
+            
+            if (retryCount < 3) {
+              error.requestOptions.extra['retryCount'] = retryCount + 1;
+              
+              // Wait before retry (exponential backoff)
+              await Future.delayed(Duration(seconds: 1 << retryCount));
+              
+              try {
+                final response = await _dio.fetch(error.requestOptions);
+                return handler.resolve(response);
+              } catch (e) {
+                return handler.next(error);
+              }
             }
           }
           return handler.next(error);

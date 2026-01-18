@@ -18,25 +18,22 @@ void main() async {
   // Initialize Firebase (if using FCM)
   try {
     await Firebase.initializeApp();
-    // Set up background message handler
+    // Only set up messaging if Firebase initialized successfully
     FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+  
+   // Initialize FCM service
+    await FCMService().init();
+    debugPrint('Firebase services initialized successfully');
   } catch (e) {
     debugPrint('Firebase initialization error: $e');
-    // Continue without Firebase if initialization fails
+    debugPrint('App will continue without push notifications');
+    // Don't try to initialize FCM if Firebase failed
   }
 
   // Initialize services
   await StorageService().init();
   await OfflineStorageService().init();
   await ApiClient().init();
-
-  // Initialize FCM service
-  try {
-    await FCMService().init();
-  } catch (e) {
-    debugPrint('FCM initialization error: $e');
-    // Continue without FCM if initialization fails
-  }
 
   // Initialize background sync service
   try {

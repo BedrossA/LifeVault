@@ -1,7 +1,7 @@
 /**
  * Heatmap Chart Component
  */
-import { format, eachDayOfInterval, startOfWeek, endOfWeek, isSameDay } from 'date-fns';
+import { format, eachDayOfInterval, isSameDay } from 'date-fns';
 import type { ChartDataPoint } from '../../types/analytics';
 
 interface HeatmapChartProps {

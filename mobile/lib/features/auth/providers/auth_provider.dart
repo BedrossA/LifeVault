@@ -42,25 +42,45 @@ class AuthState {
 class AuthNotifier extends StateNotifier<AuthState> {
   final AuthApiService _authService;
   final StorageService _storage;
-
+  bool _initialized = false;
+  
   AuthNotifier(this._authService, this._storage)
-      : super(AuthState()) {
+      : super(AuthState(isLoading: true)) {
     _checkAuthStatus();
   }
 
   Future<void> _checkAuthStatus() async {
-    final token = await _storage.getAccessToken();
-    if (token != null) {
-      try {
-        final user = await _authService.getCurrentUser();
+    try {
+      final token = await _storage.getAccessToken();
+      if (token != null) {
+        try {
+          final user = await _authService.getCurrentUser();
+          state = state.copyWith(
+            user: user,
+            isAuthenticated: true,
+            isLoading: false,
+          );
+        } catch (e) {
+          await _storage.clearTokens();
+          state = state.copyWith(
+            isAuthenticated: false,
+            isLoading: false,
+          );
+        }
+      } else {
         state = state.copyWith(
-          user: user,
-          isAuthenticated: true,
+          isAuthenticated: false,
+          isLoading: false,
         );
-      } catch (e) {
-        await _storage.clearTokens();
-        state = state.copyWith(isAuthenticated: false);
       }
+    } catch (e) {
+      state = state.copyWith(
+        isAuthenticated: false,
+        isLoading: false,
+        error: e.toString(),
+      );
+    } finally {
+      _initialized = true;
     }
   }
 

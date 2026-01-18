@@ -2,18 +2,21 @@
  * Comparison Chart Component (Multiple metrics comparison)
  */
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { memo } from 'react';
 
 interface ComparisonChartProps {
   data: Array<Record<string, string | number>>;
   title?: string;
+  dataKey?: string;
   metrics: string[];
   colors?: string[];
 }
 
-export function ComparisonChart({
+export const ComparisonChart = memo(function ComparisonChart({
   data,
   title,
   metrics,
+  dataKey='value',
   colors = ['#0ea5e9', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'],
 }: ComparisonChartProps) {
   return (
@@ -52,5 +55,12 @@ export function ComparisonChart({
       </ResponsiveContainer>
     </div>
   );
-}
+}, (prevProps, nextProps) => {
+  // Custom comparison
+  return (
+    JSON.stringify(prevProps.data) === JSON.stringify(nextProps.data) &&
+    prevProps.title === nextProps.title &&
+    prevProps.dataKey === nextProps.dataKey
+  );
+});
 

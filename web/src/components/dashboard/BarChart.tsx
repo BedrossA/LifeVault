@@ -2,6 +2,7 @@
  * Bar Chart Component using Recharts
  */
 import { BarChart as RechartsBarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { memo } from 'react';
 
 interface BarChartProps {
   data: Array<Record<string, string | number>>;
@@ -12,7 +13,7 @@ interface BarChartProps {
   showGrid?: boolean;
 }
 
-export function BarChart({
+export const BarChart = memo(function BarChart({
   data,
   title,
   dataKey,
@@ -41,5 +42,12 @@ export function BarChart({
       </ResponsiveContainer>
     </div>
   );
-}
+}, (prevProps, nextProps) => {
+  // Custom comparison
+  return (
+    JSON.stringify(prevProps.data) === JSON.stringify(nextProps.data) &&
+    prevProps.title === nextProps.title &&
+    prevProps.dataKey === nextProps.dataKey
+  );
+});
 

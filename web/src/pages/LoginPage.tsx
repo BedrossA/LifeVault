@@ -6,6 +6,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { FaceLogin } from '../components/FaceLogin';
 import { ThemeToggle } from '../components/ThemeToggle';
+import { validateUsername, validatePassword } from '../utils/validation';
+
 
 export function LoginPage() {
   const [username, setUsername] = useState('');
@@ -20,6 +22,18 @@ export function LoginPage() {
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError(null);
+    // Validate inputs
+    const usernameValidation = validateUsername(username);
+    if (!usernameValidation.isValid) {
+      setError(usernameValidation.error!);
+      return;
+    }
+
+    const passwordValidation = validatePassword(password);
+    if (!passwordValidation.isValid) {
+      setError(passwordValidation.error!);
+      return;
+    }
 
     try {
       await login({ username, password, rememberMe });

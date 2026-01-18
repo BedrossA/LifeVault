@@ -75,7 +75,8 @@ class _FaceRecognitionPageState extends ConsumerState<FaceRecognitionPage> {
 
   @override
   void dispose() {
-    _cameraController?.dispose();
+    final cameraService = ref.read(cameraServiceProvider);
+    cameraService.dispose();
     super.dispose();
   }
 

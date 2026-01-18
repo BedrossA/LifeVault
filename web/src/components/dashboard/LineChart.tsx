@@ -3,6 +3,7 @@
  */
 import { LineChart as RechartsLineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import type { ChartDataPoint } from '../../types/analytics';
+import { memo } from 'react';
 
 interface LineChartProps {
   data: ChartDataPoint[];
@@ -12,7 +13,7 @@ interface LineChartProps {
   showGrid?: boolean;
 }
 
-export function LineChart({
+export const LineChart = memo(function LineChart({
   data,
   title,
   dataKey = 'value',
@@ -52,5 +53,12 @@ export function LineChart({
       </ResponsiveContainer>
     </div>
   );
-}
+}, (prevProps, nextProps) => {
+  // Custom comparison
+  return (
+    JSON.stringify(prevProps.data) === JSON.stringify(nextProps.data) &&
+    prevProps.title === nextProps.title &&
+    prevProps.dataKey === nextProps.dataKey
+  );
+});
 

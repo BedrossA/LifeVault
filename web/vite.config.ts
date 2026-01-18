@@ -17,9 +17,9 @@ export default defineConfig({
     // Frontend runs on PC, backend runs on server at 192.168.0.109:8000
     proxy: {
       '/api': {
-        target: 'http://192.168.0.109:8000',
+        target: process.env.VITE_API_BASE_URL || 'http://localhost:8000',
         changeOrigin: true,
-        secure: false, // Allow self-signed certificates if needed
+        secure: true, // Allow self-signed certificates if needed
       },
     },
   },

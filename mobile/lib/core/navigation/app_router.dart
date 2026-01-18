@@ -20,17 +20,22 @@ final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     initialLocation: AppConstants.routeSplash,
     redirect: (context, state) {
+     // Wait for auth to initialize
+      if (authState.isLoading) {
+        return AppConstants.routeSplash;
+      }
+
       final isAuthenticated = authState.isAuthenticated;
       final isLoggingIn = state.matchedLocation == AppConstants.routeLogin ||
           state.matchedLocation == AppConstants.routeRegister;
-
+      final isSplash = state.matchedLocation == AppConstants.routeSplash;
       // If not authenticated and trying to access protected route
-      if (!isAuthenticated && !isLoggingIn) {
+      if (!isAuthenticated && !isLoggingIn && !isSplash) {
         return AppConstants.routeLogin;
       }
 
       // If authenticated and trying to access auth pages
-      if (isAuthenticated && isLoggingIn) {
+      if (isAuthenticated && (isLoggingIn || isSplash)) {
         return AppConstants.routeHome;
       }
 
