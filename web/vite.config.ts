@@ -27,7 +27,7 @@ export default defineConfig({
       '/api': {
         target: process.env.VITE_API_BASE_URL || 'http://localhost:8000',
         changeOrigin: true,
-        secure: true, // Allow self-signed certificates if needed
+        secure: false,
       },
     },
   },

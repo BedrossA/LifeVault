@@ -51,6 +51,14 @@ export const useAuthStore = create<AuthState>()(
           // 1. Get Tokens from login endpoint
           const tokenData: Token = await apiClient.login(credentials);
           
+          // Validate that we received both tokens
+          if (!tokenData.access_token) {
+            throw new Error('No access token received from server');
+          }
+          if (!tokenData.refresh_token) {
+            throw new Error('No refresh token received from server');
+          }
+          
           // 2. Store tokens in localStorage FIRST (before making any other API calls)
           // This ensures the interceptor can use them immediately
           // If rememberMe is true, tokens persist longer (handled by backend token expiry)
@@ -72,14 +80,25 @@ export const useAuthStore = create<AuthState>()(
           });
 
           // 4. Get User Profile (now that tokens are stored, interceptor will add them)
-          const user = await apiClient.getCurrentUser();
-
-          // 5. Update state with user info
-          set({
-            user,
-            isLoading: false,
-            error: null,
-          });
+          // If this fails, we still have valid tokens, so don't fail the entire login
+          try {
+            const user = await apiClient.getCurrentUser();
+            // 5. Update state with user info
+            set({
+              user,
+              isLoading: false,
+              error: null,
+            });
+          } catch (userError: any) {
+            // If getting user fails, log it but don't fail login
+            // The user is still authenticated with valid tokens
+            console.warn('Failed to fetch user profile after login:', userError);
+            set({
+              isLoading: false,
+              error: null,
+              // Keep tokens and authenticated state
+            });
+          }
         } catch (error: any) {
           // Clear tokens on error
           localStorage.removeItem('access_token');

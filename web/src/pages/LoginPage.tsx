@@ -1,12 +1,13 @@
 /**
  * Login Page
  */
-import { useState, FormEvent } from 'react';
+import { useState, FormEvent, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { FaceLogin } from '../components/FaceLogin';
 import { ThemeToggle } from '../components/ThemeToggle';
-import { validateUsername, validatePassword } from '../utils/validation';
+import { validateUsernameOrEmail, validatePassword } from '../utils/validation';
+import { extractErrorMessage } from '../utils/errorHandler';
 
 
 export function LoginPage() {
@@ -16,30 +17,43 @@ export function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [loginMethod, setLoginMethod] = useState<'password' | 'face'>('password');
   
-  const { login, isLoading } = useAuthStore();
+  const { login, isLoading, error: authError, clearError } = useAuthStore();
   const navigate = useNavigate();
 
-  const handleSubmit = async (e: FormEvent) => {
+  // Sync authStore error with local error state
+  useEffect(() => {
+    if (authError) {
+      setError(authError);
+    }
+  }, [authError]);
+
+    const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError(null);
-    // Validate inputs
-    const usernameValidation = validateUsername(username);
+    clearError();
+
+    const trimmedUsername = username.trim();
+    const trimmedPassword = password.trim();
+
+    const usernameValidation = validateUsernameOrEmail(trimmedUsername);
     if (!usernameValidation.isValid) {
       setError(usernameValidation.error!);
       return;
     }
 
-    const passwordValidation = validatePassword(password);
+    const passwordValidation = validatePassword(trimmedPassword);
     if (!passwordValidation.isValid) {
       setError(passwordValidation.error!);
       return;
     }
 
     try {
-      await login({ username, password, rememberMe });
+      await login({ username: trimmedUsername, password: trimmedPassword, rememberMe });
       navigate('/dashboard');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Login failed');
+      // Use error handler to extract proper error message from Axios errors
+      const errorMessage = extractErrorMessage(err);
+      setError(errorMessage);
     }
   };
 
@@ -133,7 +147,7 @@ export function LoginPage() {
             <div className="space-y-4">
               <div>
                 <label htmlFor="username" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Username
+                  Username or email
                 </label>
                 <input
                   id="username"
@@ -141,7 +155,7 @@ export function LoginPage() {
                   type="text"
                   required
                   className="input"
-                  placeholder="Enter your username"
+                  placeholder="Enter your username or email"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                 />

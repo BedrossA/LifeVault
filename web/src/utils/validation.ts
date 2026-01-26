@@ -85,6 +85,23 @@ export interface ValidationResult {
   }
   
   /**
+   * Username or email validation (for login)
+   * Accepts either a valid username or a valid email.
+   */
+  export function validateUsernameOrEmail(value: string): { isValid: boolean; error?: string } {
+    if (!value) {
+      return { isValid: false, error: 'Username or email is required' };
+    }
+    if (value.length > 254) {
+      return { isValid: false, error: 'Input is too long' };
+    }
+    if (value.includes('@')) {
+      return validateEmail(value);
+    }
+    return validateUsername(value);
+  }
+
+  /**
    * Username validation
    */
   export function validateUsername(username: string): { isValid: boolean; error?: string } {

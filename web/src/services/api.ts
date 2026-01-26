@@ -37,12 +37,17 @@ class ApiClient {
     /**
      * Request Interceptor
      * Injects the Bearer token from localStorage into every outgoing request.
+     * Skips auth endpoints (login, register, etc.) to avoid preflight and stale tokens.
      */
     this.client.interceptors.request.use(
       (config: InternalAxiosRequestConfig) => {
-        const token = localStorage.getItem('access_token');
-        if (token && config.headers) {
-          config.headers.Authorization = `Bearer ${token}`;
+        const authPaths = ['/auth/login', '/auth/register', '/auth/forgot-password', '/auth/reset-password', '/auth/refresh'];
+        const isAuthPath = config.url && authPaths.some((p) => config.url!.includes(p));
+        if (!isAuthPath) {
+          const token = localStorage.getItem('access_token');
+          if (token && config.headers) {
+            config.headers.Authorization = `Bearer ${token}`;
+          }
         }
         return config;
       },
@@ -52,19 +57,33 @@ class ApiClient {
     /**
      * Response Interceptor
      * Detects 401 errors to trigger an automatic token refresh.
+     * Skips refresh for auth endpoints (login, register, refresh) where 401 is expected.
      */
     this.client.interceptors.response.use(
       (response) => response,
       async (error: AxiosError<ApiError>) => {
         const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
 
+        // Skip token refresh for authentication endpoints where 401 is expected
+        const authEndpoints = ['/auth/login', '/auth/register', '/auth/forgot-password', '/auth/reset-password', '/auth/refresh'];
+        const isAuthEndpoint = originalRequest?.url && authEndpoints.some(endpoint => originalRequest.url?.includes(endpoint));
+
         // If 401 (Unauthorized) and we haven't tried refreshing yet
-        if (error.response?.status === 401 && !originalRequest._retry) {
+        // AND it's not an auth endpoint (where 401 is expected behavior)
+        if (error.response?.status === 401 && !originalRequest._retry && !isAuthEndpoint) {
           originalRequest._retry = true;
 
           try {
             const refreshToken = localStorage.getItem('refresh_token');
-            if (!refreshToken) throw new Error('No refresh token available');
+            if (!refreshToken) {
+              // No refresh token available, don't redirect if already on login page
+              if (window.location.pathname !== '/login') {
+                localStorage.removeItem('access_token');
+                localStorage.removeItem('refresh_token');
+                window.location.href = '/login';
+              }
+              return Promise.reject(error);
+            }
 
             // Attempt to get a new access token
             // Use the client instance to ensure proxy and interceptors are used
@@ -87,9 +106,13 @@ class ApiClient {
 
           } catch (refreshError) {
             // If refresh fails, clear storage and force login
-            localStorage.removeItem('access_token');
-            localStorage.removeItem('refresh_token');
-            window.location.href = '/login';
+            // But don't redirect if already on login page or during login flow
+            const isOnLoginPage = window.location.pathname === '/login' || window.location.pathname === '/register';
+            if (!isOnLoginPage) {
+              localStorage.removeItem('access_token');
+              localStorage.removeItem('refresh_token');
+              window.location.href = '/login';
+            }
             return Promise.reject(refreshError);
           }
         }

@@ -5,6 +5,7 @@ import { useState, FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { validateEmail, validateUsername, validatePassword, validateFullName } from '../utils/validation';
+import { extractErrorMessage } from '../utils/errorHandler';
 
 
 export function RegisterPage() {
@@ -21,43 +22,44 @@ export function RegisterPage() {
     e.preventDefault();
     setError(null);
 
-    // Validate all inputs
-    const emailValidation = validateEmail(email);
+    const trimmedEmail = email.trim().toLowerCase();
+    const trimmedUsername = username.trim();
+    const trimmedPassword = password.trim();
+    const trimmedFullName = fullName.trim();
+
+    const emailValidation = validateEmail(trimmedEmail);
     if (!emailValidation.isValid) {
       setError(emailValidation.error!);
       return;
     }
-  
-    const usernameValidation = validateUsername(username);
+    const usernameValidation = validateUsername(trimmedUsername);
     if (!usernameValidation.isValid) {
       setError(usernameValidation.error!);
       return;
     }
-  
-    const passwordValidation = validatePassword(password);
+    const passwordValidation = validatePassword(trimmedPassword);
     if (!passwordValidation.isValid) {
       setError(passwordValidation.error!);
       return;
     }
-  
-    if (fullName) {
-      const nameValidation = validateFullName(fullName);
+    if (trimmedFullName) {
+      const nameValidation = validateFullName(trimmedFullName);
       if (!nameValidation.isValid) {
         setError(nameValidation.error!);
         return;
       }
     }
-  
+
     try {
       await register({
-        email,
-        username,
-        password,
-        full_name: fullName || undefined,
+        email: trimmedEmail,
+        username: trimmedUsername,
+        password: trimmedPassword,
+        full_name: trimmedFullName || undefined,
       });
       navigate('/dashboard');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Registration failed');
+      setError(extractErrorMessage(err) || 'Registration failed');
     }
   };
 
