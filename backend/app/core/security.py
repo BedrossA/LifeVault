@@ -11,12 +11,17 @@ import hashlib
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """Verify password against hash"""
     try:
+        # Check if hash is valid bcrypt format (should start with $2a$, $2b$, or $2y$)
+        if not hashed_password or not hashed_password.startswith(('$2a$', '$2b$', '$2y$')):
+            logger.error(f"Invalid password hash format: prefix={hashed_password[:10] if hashed_password else 'None'}")
+            return False
+        
         # Convert password to bytes for bcrypt
         password_bytes = plain_password.encode('utf-8')
         hashed_bytes = hashed_password.encode('utf-8')
         return bcrypt.checkpw(password_bytes, hashed_bytes)
     except Exception as e:
-        logger.error(f"Password verification error: {e}")
+        logger.error(f"Password verification error: {e}, hash_prefix={hashed_password[:20] if hashed_password else 'None'}")
         return False
 
 def get_password_hash(password: str) -> str:

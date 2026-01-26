@@ -36,14 +36,40 @@ async def login(
     - Returns access_token and refresh_token
     - Compatible with Swagger UI "Authorize" button
     """
-    # Get username and password from form_data
-    username = form_data.username  # ← CHANGED
-    password = form_data.password  # ← CHANGED
-    
-    # Authenticate user
+    username = (form_data.username or "").strip()
+    password = (form_data.password or "").strip()
+
     user = db.query(User).filter(User.username == username).first()
+    if not user:
+        user = db.query(User).filter(User.email == username).first()
+    if not user:
+        if settings.DEBUG:
+            logger.info(f"Login fail: no user for username/email {username!r}")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect username or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    # Check if hashed_password is None or empty
+    if not user.hashed_password:
+        logger.warning(f"Login fail: user {user.username} has no password hash")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect username or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
     
-    if not user or not security.verify_password(password, user.hashed_password):
+    ok = security.verify_password(password, user.hashed_password)
+    if settings.DEBUG:
+        prefix = (user.hashed_password or "")[:12]
+        logger.info(f"Login verify: user_id={user.id} verify_ok={ok} hash_prefix={prefix!r} password_len={len(password)}")
+    if not ok:
+        logger.warning(
+            "Login verify failed: user_id=%s username=%s hash_prefix=%s hash_len=%s password_len=%s",
+            user.id, user.username, (user.hashed_password or "")[:12], 
+            len(user.hashed_password or ""), len(password)
+        )
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect username or password",
@@ -110,26 +136,26 @@ def register(
     - **email**: Valid email address
     - **password**: Strong password (min 8 characters)
     """
-    # Check if username exists
-    if db.query(User).filter(User.username == user_data.username).first():
+    username = (user_data.username or "").strip()
+    email = (user_data.email or "").strip().lower()
+    password = (user_data.password or "").strip()
+
+    if db.query(User).filter(User.username == username).first():
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Username already registered"
         )
-    
-    # Check if email exists
-    if db.query(User).filter(User.email == user_data.email).first():
+    if db.query(User).filter(User.email == email).first():
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Email already registered"
         )
-    
-    # Create user
-    hashed_password = security.get_password_hash(user_data.password)
+
+    hashed_password = security.get_password_hash(password)
     
     user = User(
-        username=user_data.username,
-        email=user_data.email,
+        username=username,
+        email=email,
         hashed_password=hashed_password,
         is_active=True
     )

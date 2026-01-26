@@ -1,6 +1,5 @@
 """Goal milestone models"""
-from sqlalchemy import Column, Integer, String, Float, DateTime, Boolean, ForeignKey, Text
-from sqlalchemy.orm import relationship
+from sqlalchemy import Column, Integer, String, Float, DateTime, Boolean, Text
 from datetime import datetime, UTC
 from app.db.base import Base
 
@@ -9,7 +8,7 @@ class GoalMilestone(Base):
     __tablename__ = "goal_milestones"
     
     id = Column(Integer, primary_key=True, index=True)
-    goal_id = Column(String, ForeignKey("goals.id"), nullable=False)
+    goal_id = Column(String, nullable=False)  # References Mongo goals.id; no FK to avoid init_db failure
     title = Column(String, nullable=False)
     description = Column(Text, nullable=True)
     target_value = Column(Float, nullable=False)
@@ -19,7 +18,7 @@ class GoalMilestone(Base):
     order = Column(Integer, default=0)  # Order of milestone
     created_at = Column(DateTime, default=lambda: datetime.now(UTC))
     updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
-    
+
     def __repr__(self):
         return f"<GoalMilestone {self.id} goal_id={self.goal_id} title={self.title}>"
 

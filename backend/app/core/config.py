@@ -63,9 +63,13 @@ class Settings(BaseSettings):
     ALLOWED_EXTENSIONS: str = "jpg,jpeg,png"
     
     # CORS
-    CORS_ORIGINS: List[str] = ["http://localhost:5173",
-                            "http://192.168.0.105:5173",
-                            "http://192.168.0.109:5173"]
+    CORS_ORIGINS: List[str] = [
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://192.168.0.105:5173",
+        "http://192.168.0.106:5173",
+        "http://192.168.0.109:5173",
+    ]
     
     # Camera Settings
     CAMERA_RESOLUTION_WIDTH: int = 2592

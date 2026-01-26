@@ -49,6 +49,8 @@ def get_db():
 def init_db():
     """Initialize database - create all tables"""
     try:
+        from app.models.goals import Goal
+        from app.models.goal_milestone import GoalMilestone
         Base.metadata.create_all(bind=engine)
         logger.info("Database tables created successfully")
     except Exception as e:
