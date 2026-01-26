@@ -1,0 +1,29 @@
+🧪 LifeVault Automated Test Suite
+=================================
+Started: Mon 26 Jan 13:50:47 EET 2026
+Base URL: http://localhost:8000
+
+[0;34mChecking server availability...[0m
+[0;32m✓ Server is running[0m
+
+[0;34m═══════════════════════════════════[0m
+[0;34mTest Suite 1: System Health[0m
+[0;34m═══════════════════════════════════[0m
+Testing: Health Check... [0;32mPASS[0m (HTTP 200)
+Testing: Root Endpoint... [0;32mPASS[0m (HTTP 200)
+
+[0;34m═══════════════════════════════════[0m
+[0;34mTest Suite 2: Authentication[0m
+[0;34m═══════════════════════════════════[0m
+[0;32mPASS[0m Registration
+[0;32mPASS[0m Login
+Testing: Get Current User... [0;32mPASS[0m (HTTP 200)
+Testing: Get Login History... [0;32mPASS[0m (HTTP 200)
+
+[0;34m═══════════════════════════════════[0m
+[0;34mTest Suite 3: Analytics[0m
+[0;34m═══════════════════════════════════[0m
+[0;32mPASS[0m Create Analytics Entry
+Testing: List Entries... [0;32mPASS[0m (HTTP 200)
+Testing: Get Statistics... [0;31mFAIL[0m (Expected: 200, Got: 404)
+  Response: {"detail":"Not Found"}

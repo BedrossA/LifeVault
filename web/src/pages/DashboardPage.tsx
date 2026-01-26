@@ -128,31 +128,51 @@ export function DashboardPage() {
     }
   };
 
-  // Prepare chart data
-  const timeSeriesData = entries
-    .filter((e) => e.metric === 'steps' || e.metric === 'calories' || entries.length < 10)
-    .map((e) => {
-      try {
-        const date = new Date(e.timestamp);
-        return {
-          date: format(date, 'yyyy-MM-dd'),
-          value: e.value,
-        };
-      } catch {
-        return null;
-      }
-    })
-    .filter((e): e is { date: string; value: number } => e !== null)
-    .reduce((acc, curr) => {
-      const existing = acc.find((a) => a.date === curr.date);
-      if (existing) {
-        existing.value += curr.value;
+  // Prepare chart data - group by date and metric, properly handling units
+  const timeSeriesDataMap = new Map<string, { date: string; value: number; metric: string; category: string; unit?: string }>();
+  
+  entries.forEach((e) => {
+    try {
+      const date = new Date(e.timestamp);
+      const dateKey = format(date, 'yyyy-MM-dd');
+      const metricKey = `${dateKey}-${e.metric}-${e.category}`;
+      
+      if (timeSeriesDataMap.has(metricKey)) {
+        const existing = timeSeriesDataMap.get(metricKey)!;
+        // Sum values for same metric/category/date (same unit)
+        existing.value += e.value;
       } else {
-        acc.push(curr);
+        timeSeriesDataMap.set(metricKey, {
+          date: dateKey,
+          value: e.value,
+          metric: e.metric,
+          category: e.category,
+          unit: e.unit,
+        });
       }
-      return acc;
-    }, [] as Array<{ date: string; value: number }>)
+    } catch (error) {
+      console.error('Error processing entry for chart:', error);
+    }
+  });
+  
+  // Convert to array and sort by date
+  const timeSeriesData = Array.from(timeSeriesDataMap.values())
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  
+  // Group by metric for better visualization (if multiple metrics, show most common)
+  const metricCounts = new Map<string, number>();
+  entries.forEach((e) => {
+    metricCounts.set(e.metric, (metricCounts.get(e.metric) || 0) + 1);
+  });
+  
+  // Get the most common metric for the main chart
+  const primaryMetric = Array.from(metricCounts.entries())
+    .sort((a, b) => b[1] - a[1])[0]?.[0] || 'steps';
+  
+  // Filter to primary metric for Activity Over Time chart
+  const primaryTimeSeriesData = timeSeriesData
+    .filter((d) => d.metric === primaryMetric)
+    .map((d) => ({ date: d.date, value: d.value }));
 
   const categoryData = Object.entries(stats?.categories || {}).map(([category, count]) => ({
     category: category.charAt(0).toUpperCase() + category.slice(1),
@@ -276,10 +296,10 @@ export function DashboardPage() {
         {/* Charts Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Time Series Line Chart */}
-          {timeSeriesData.length > 0 && (
+          {primaryTimeSeriesData.length > 0 && (
             <LineChart
-              data={timeSeriesData}
-              title="Activity Over Time"
+              data={primaryTimeSeriesData}
+              title={`Activity Over Time - ${primaryMetric.charAt(0).toUpperCase() + primaryMetric.slice(1).replace('_', ' ')}`}
               dataKey="value"
             />
           )}
@@ -295,9 +315,9 @@ export function DashboardPage() {
           )}
 
           {/* Heatmap */}
-          {entries.length > 0 && timeSeriesData.length > 0 && (
+          {entries.length > 0 && primaryTimeSeriesData.length > 0 && (
             <HeatmapChart
-              data={timeSeriesData}
+              data={primaryTimeSeriesData}
               title="Activity Heatmap"
               startDate={new Date(dateRange.start)}
               endDate={new Date(dateRange.end)}
@@ -305,18 +325,18 @@ export function DashboardPage() {
           )}
 
           {/* Predictive Chart */}
-          {timeSeriesData.length > 5 && (
+          {primaryTimeSeriesData.length > 5 && (
             <PredictiveChart
-              historicalData={timeSeriesData.slice(0, Math.floor(timeSeriesData.length * 0.8))}
-              predictedData={timeSeriesData.slice(Math.floor(timeSeriesData.length * 0.8))}
+              historicalData={primaryTimeSeriesData.slice(0, Math.floor(primaryTimeSeriesData.length * 0.8))}
+              predictedData={primaryTimeSeriesData.slice(Math.floor(primaryTimeSeriesData.length * 0.8))}
               title="Trend Prediction"
             />
           )}
 
           {/* Comparison Chart - Multiple Metrics */}
-          {entries.length > 0 && (
+          {entries.length > 0 && timeSeriesData.length > 0 && (
             <ComparisonChart
-              data={timeSeriesData}
+              data={timeSeriesData.map(d => ({ date: d.date, value: d.value }))}
               title="Metrics Comparison"
               metrics={['value']}
             />

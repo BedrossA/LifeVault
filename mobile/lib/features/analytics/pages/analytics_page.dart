@@ -189,26 +189,57 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage>
                   ),
                   const SizedBox(height: 16),
                   SizedBox(
-                    height: 250,
+                    height: 300,
                     child: LineChart(
                       LineChartData(
-                        gridData: const FlGridData(show: true),
+                        gridData: FlGridData(
+                          show: true,
+                          drawVerticalLine: true,
+                          horizontalInterval: _timeSeries!.data.isNotEmpty
+                              ? (_timeSeries!.data.map((e) => e.value).reduce((a, b) => a > b ? a : b) / 5)
+                              : 1,
+                        ),
                         titlesData: FlTitlesData(
-                          leftTitles: const AxisTitles(
-                            sideTitles: SideTitles(showTitles: true),
+                          leftTitles: AxisTitles(
+                            sideTitles: SideTitles(
+                              showTitles: true,
+                              reservedSize: 40,
+                              getTitlesWidget: (value, meta) {
+                                return Padding(
+                                  padding: const EdgeInsets.only(right: 4),
+                                  child: Text(
+                                    value.toInt().toString(),
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
                           ),
                           bottomTitles: AxisTitles(
                             sideTitles: SideTitles(
                               showTitles: true,
+                              reservedSize: 30,
                               getTitlesWidget: (value, meta) {
-                                if (value.toInt() % 5 == 0) {
-                                  return Text(
-                                    DateFormat('MMM d').format(
-                                      DateTime.now()
-                                          .subtract(Duration(days: 30 - value.toInt())),
-                                    ),
-                                    style: const TextStyle(fontSize: 10),
-                                  );
+                                final index = value.toInt();
+                                if (index >= 0 && index < _timeSeries!.data.length) {
+                                  final datePoint = _timeSeries!.data[index];
+                                  // Show label every nth point to avoid crowding
+                                  final showInterval = (_timeSeries!.data.length / 6).ceil();
+                                  if (index % showInterval == 0 || index == _timeSeries!.data.length - 1) {
+                                    return Padding(
+                                      padding: const EdgeInsets.only(top: 4),
+                                      child: Text(
+                                        DateFormat('MMM d').format(datePoint.date),
+                                        style: TextStyle(
+                                          fontSize: 10,
+                                          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                                        ),
+                                      ),
+                                    );
+                                  }
                                 }
                                 return const Text('');
                               },
@@ -221,7 +252,13 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage>
                             sideTitles: SideTitles(showTitles: false),
                           ),
                         ),
-                        borderData: FlBorderData(show: true),
+                        borderData: FlBorderData(
+                          show: true,
+                          border: Border.all(
+                            color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
+                            width: 1,
+                          ),
+                        ),
                         lineBarsData: [
                           LineChartBarData(
                             spots: _timeSeries!.data
@@ -235,10 +272,31 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage>
                             isCurved: true,
                             color: Theme.of(context).colorScheme.primary,
                             barWidth: 3,
-                            dotData: const FlDotData(show: false),
-                            belowBarData: BarAreaData(show: false),
+                            dotData: FlDotData(
+                              show: _timeSeries!.data.length <= 20, // Show dots only if not too many points
+                              getDotPainter: (spot, percent, barData, index) {
+                                return FlDotCirclePainter(
+                                  radius: 4,
+                                  color: Theme.of(context).colorScheme.primary,
+                                  strokeWidth: 2,
+                                  strokeColor: Theme.of(context).colorScheme.surface,
+                                );
+                              },
+                            ),
+                            belowBarData: BarAreaData(
+                              show: true,
+                              color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+                            ),
                           ),
                         ],
+                        minX: 0,
+                        maxX: _timeSeries!.data.length > 0 ? (_timeSeries!.data.length - 1).toDouble() : 0,
+                        minY: _timeSeries!.data.isNotEmpty
+                            ? (_timeSeries!.data.map((e) => e.value).reduce((a, b) => a < b ? a : b) * 0.9)
+                            : 0,
+                        maxY: _timeSeries!.data.isNotEmpty
+                            ? (_timeSeries!.data.map((e) => e.value).reduce((a, b) => a > b ? a : b) * 1.1)
+                            : 100,
                       ),
                     ),
                   ),

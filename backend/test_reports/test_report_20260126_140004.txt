@@ -1,0 +1,80 @@
+🧪 LifeVault Automated Test Suite
+=================================
+Started: Mon 26 Jan 14:00:04 EET 2026
+Base URL: http://localhost:8000
+
+[0;34mChecking server availability...[0m
+[0;32m✓ Server is running[0m
+
+[0;34m═══════════════════════════════════[0m
+[0;34mTest Suite 1: System Health[0m
+[0;34m═══════════════════════════════════[0m
+Testing: Health Check... [0;32mPASS[0m (HTTP 200)
+Testing: Root Endpoint... [0;32mPASS[0m (HTTP 200)
+
+[0;34m═══════════════════════════════════[0m
+[0;34mTest Suite 2: Authentication[0m
+[0;34m═══════════════════════════════════[0m
+[0;32mPASS[0m Registration
+[0;32mPASS[0m Login
+Testing: Get Current User... [0;32mPASS[0m (HTTP 200)
+Testing: Get Login History... [0;32mPASS[0m (HTTP 200)
+
+[0;34m═══════════════════════════════════[0m
+[0;34mTest Suite 3: Analytics[0m
+[0;34m═══════════════════════════════════[0m
+[0;32mPASS[0m Create Analytics Entry
+Testing: List Entries... [0;32mPASS[0m (HTTP 200)
+Testing: Get Statistics... [0;32mPASS[0m (HTTP 200)
+Testing: Get Single Entry... [0;32mPASS[0m (HTTP 200)
+
+[0;34m═══════════════════════════════════[0m
+[0;34mTest Suite 4: Goals[0m
+[0;34m═══════════════════════════════════[0m
+Testing: Create Goal... [0;32mPASS[0m (HTTP 201)
+Testing: List Goals... [0;32mPASS[0m (HTTP 200)
+
+[0;34m═══════════════════════════════════[0m
+[0;34mTest Suite 5: Intelligence[0m
+[0;34m═══════════════════════════════════[0m
+Testing: Get Recommendations... [0;32mPASS[0m (HTTP 200)
+Testing: Get Activities... [0;32mPASS[0m (HTTP 200)
+Testing: Get Activity Stats... [0;32mPASS[0m (HTTP 200)
+
+[0;34m═══════════════════════════════════[0m
+[0;34mTest Suite 6: Face Recognition[0m
+[0;34m═══════════════════════════════════[0m
+Testing: List Enrolled Faces... [0;32mPASS[0m (HTTP 200)
+Testing: Get Face Stats... [0;32mPASS[0m (HTTP 200)
+Testing: Get Face Config... [0;32mPASS[0m (HTTP 200)
+
+[0;34m═══════════════════════════════════[0m
+[0;34mTest Suite 7: Error Handling[0m
+[0;34m═══════════════════════════════════[0m
+Testing: Unauthorized Access... [0;32mPASS[0m (HTTP 401)
+Testing: Invalid Entry ID... [0;32mPASS[0m (HTTP 400)
+Testing: Not Found... [0;32mPASS[0m (HTTP 404)
+
+[0;34m═══════════════════════════════════[0m
+[0;34mTest Suite 8: Input Validation[0m
+[0;34m═══════════════════════════════════[0m
+Testing: Missing Fields... [0;32mPASS[0m (HTTP 422)
+Testing: Invalid Email... [0;32mPASS[0m (HTTP 422)
+
+
+═════════════════════════════════════════
+[0;34mTEST RESULTS SUMMARY[0m
+═════════════════════════════════════════
+
+Total Tests:    23
+[0;32mPassed:         23 ✓[0m
+[0;31mFailed:         0 ✗[0m
+[1;33mSkipped:        0 ⊘[0m
+
+Success Rate:   100%
+
+[0;32m🎉 ALL TESTS PASSED! 🎉[0m
+
+Completed: Mon 26 Jan 14:00:05 EET 2026
+Report saved to: ./test_reports/test_report_20260126_140004.txt
+

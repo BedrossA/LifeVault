@@ -10,8 +10,8 @@ interface ProgressBarProps {
 }
 
 export function ProgressBar({ label, current, target, unit = '', color = 'bg-primary-600' }: ProgressBarProps) {
-  const percentage = Math.min((current / target) * 100, 100);
-  const isComplete = current >= target;
+  const percentage = target > 0 ? Math.min((current / target) * 100, 100) : 0;
+  const isComplete = target > 0 && current >= target;
 
   return (
     <div className="card">
